@@ -1,0 +1,36 @@
+/**
+ * styles CSS stylesheet asset.
+ *
+ * @author TinhPhan <tinhpt.38@gmail.com>
+ * @package alepay-gateway
+ * @version 1.0.0
+ */
+
+.alp-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.alp-container .item {
+    width: 50%;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+}
+
+.alp-container .item input {
+    width: 50%;
+}
+
+.alp-container .item select {
+    width: 50%;
+}
+
+.alp-container .item-checkbox {
+    margin-top: 32px;
+}
+
+.alp-container .item-checkbox input {
+    padding-left: 64px;
+}
