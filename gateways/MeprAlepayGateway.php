@@ -16,6 +16,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Used in the view to identify the gateway */
     public function __construct()
     {
+        error_log(__METHOD__);
         $this->name = __("Alepay", 'memberpress');
         $this->icon = plugins_url('/alepay-gateway-memberpress') . '/assets/img/alepay.png';
         $this->desc = __('Thanh toán thông qua ATM, Internet Banking và QR Code', 'memberpress');

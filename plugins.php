@@ -59,15 +59,15 @@ function ale_config_menu()
 function config_render()
 {
 
-    $encrypt_key = get_option('dlh_ale_encrypt_key');
-    $api_key = get_option('dlh_ale_api_key');
-    $checksum_key = get_option('dlh_ale_checksum_key');
-    $base_url_v3 = get_option('dlh_ale_base_url_v3');
-    $base_url_v1 = get_option('dlh_ale_base_url_v1');
-    $base_url_live = get_option('dlh_ale_base_url_live');
-    $email = get_option('dlh_ale_email');
-    $connected = get_option('dlh_ale_connected');
-    $test_mode = get_option('dlh_ale_is_test_mode ');
+    $encrypt_key = get_option('udoo_ale_encrypt_key');
+    $api_key = get_option('udoo_ale_api_key');
+    $checksum_key = get_option('udoo_ale_checksum_key');
+    $base_url_v3 = get_option('udoo_ale_base_url_v3');
+    $base_url_v1 = get_option('udoo_ale_base_url_v1');
+    $base_url_live = get_option('udoo_ale_base_url_live');
+    $email = get_option('udoo_ale_email');
+    $connected = get_option('udoo_ale_connected');
+    $test_mode = get_option('udoo_ale_is_test_mode ');
 
     $connected = $connected == true ? 'checked' : '';
     $test_mode = $test_mode == true ? 'checked' : '';
@@ -143,60 +143,58 @@ function config_render()
             $test_mode = false;
         }
 
-        if (empty(get_option('dlh_ale_encrypt_key'))) {
-            $result = add_option('dlh_ale_encrypt_key', $encrypt_key);
-
-            var_dump($result);
+        if (empty(get_option('udoo_ale_encrypt_key'))) {
+            add_option('udoo_ale_encrypt_key', $encrypt_key);
         } else {
-            update_option('dlh_ale_encrypt_key', $encrypt_key);
+            update_option('udoo_ale_encrypt_key', $encrypt_key);
         }
 
-        if (empty(get_option('dlh_ale_api_key'))) {
-            add_option('dlh_ale_api_key', $api_key);
+        if (empty(get_option('udoo_ale_api_key'))) {
+            add_option('udoo_ale_api_key', $api_key);
         } else {
-            update_option('dlh_ale_api_key', $api_key);
+            update_option('udoo_ale_api_key', $api_key);
         }
 
-        if (empty(get_option('dlh_ale_checksum_key'))) {
-            add_option('dlh_ale_checksum_key', $checksum_key);
+        if (empty(get_option('udoo_ale_checksum_key'))) {
+            add_option('udoo_ale_checksum_key', $checksum_key);
         } else {
-            update_option('dlh_ale_checksum_key', $checksum_key);
+            update_option('udoo_ale_checksum_key', $checksum_key);
         }
 
-        if (empty(get_option('dlh_ale_base_url_v3'))) {
-            add_option('dlh_ale_base_url_v3', $url_v3);
+        if (empty(get_option('udoo_ale_base_url_v3'))) {
+            add_option('udoo_ale_base_url_v3', $url_v3);
         } else {
-            update_option('dlh_ale_base_url_v3', $url_v3);
+            update_option('udoo_ale_base_url_v3', $url_v3);
         }
 
-        if (empty(get_option('dlh_ale_base_url_v1'))) {
-            add_option('dlh_ale_base_url_v1', $url_v1);
+        if (empty(get_option('udoo_ale_base_url_v1'))) {
+            add_option('udoo_ale_base_url_v1', $url_v1);
         } else {
-            update_option('dlh_ale_base_url_v1', $url_v1);
+            update_option('udoo_ale_base_url_v1', $url_v1);
         }
 
-        if (empty(get_option('dlh_ale_base_url_live'))) {
-            add_option('dlh_ale_base_url_live', $url_live);
+        if (empty(get_option('udoo_ale_base_url_live'))) {
+            add_option('udoo_ale_base_url_live', $url_live);
         } else {
-            update_option('dlh_ale_base_url_live', $url_live);
+            update_option('udoo_ale_base_url_live', $url_live);
         }
 
-        if (empty(get_option('dlh_ale_email'))) {
-            add_option('dlh_ale_email', $email);
+        if (empty(get_option('udoo_ale_email'))) {
+            add_option('udoo_ale_email', $email);
         } else {
-            update_option('dlh_ale_email', $email);
+            update_option('udoo_ale_email', $email);
         }
 
-        if (empty(get_option('dlh_ale_connected'))) {
-            add_option('dlh_ale_connected', $connected);
+        if (empty(get_option('udoo_ale_connected'))) {
+            add_option('udoo_ale_connected', $connected);
         } else {
-            update_option('dlh_ale_connected', $connected);
+            update_option('udoo_ale_connected', $connected);
         }
 
-        if (empty(get_option('dlh_ale_is_test_mode'))) {
-            add_option('dlh_ale_is_test_mode', $test_mode);
+        if (empty(get_option('udoo_ale_is_test_mode'))) {
+            add_option('udoo_ale_is_test_mode', $test_mode);
         } else {
-            update_option('dlh_ale_is_test_mode', $test_mode);
+            update_option('udoo_ale_is_test_mode', $test_mode);
         }
     }
 }
