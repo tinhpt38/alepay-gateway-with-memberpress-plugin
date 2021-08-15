@@ -27,11 +27,12 @@ class Alepay {
         'requestOrder' => '/checkout/v1/request-order',
         'calculateFee' => '/checkout/v1/calculate-fee',
         'getTransactionInfoV1' => '/checkout/v1/get-transaction-info',
-        'requestCardLink' => '/checkout/v1/request-profile',
         'getTransactionInfo' => '/get-transaction-info',
         'tokenizationPayment' => '/checkout/v1/request-tokenization-payment',
         'tokenizationPaymentDomestic' => '/checkout/v1/request-tokenization-payment-domestic',
         'cancelCardLink' => '/checkout/v1/cancel-profile',
+
+        'requestCardLink' => '/checkout/v1/request-profile',
         'requestCardLinkDomestic' => '/alepay-card-domestic/request-profile',
         'getListBanks' => '/get-list-banks',
     );
@@ -251,11 +252,12 @@ class Alepay {
         }
     }
 
-    public function sendTokenizationPayment($tokenization) {
+    public function sendTokenizationPayment($data) {
 
-        //$data = $this->createTokenizationPaymentData($tokenization);
-        $data = [];
         $url = $this->baseURL[$this->env] . $this->URI['tokenizationPayment'];
+        if ($this->env == 'sanbox') {
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestCardLink'];
+        }
         $result = $this->sendRequestToAlepay($data, $url);
         if ($result->errorCode == '000') {
             $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);

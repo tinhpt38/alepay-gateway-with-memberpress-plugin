@@ -17,8 +17,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function __construct()
     {
         $this->name = __("Alepay", 'memberpress');
-        $this->icon = plugins_url('/alepay-gateway-memberpress') . '/assets/img/alepay.png';
-        $this->desc = __('Thanh toán thông qua ATM, Internet Banking và QR Code', 'memberpress');
+        $this->icon = plugins_url('/alepay-gateway') . '/images/alepay.png';
+        $this->desc = __('Thanh toán bằng cổng thanh toán Alepay', 'memberpress');
         $this->key = __('Alepay', 'memberpress');
         $this->set_defaults();
         $this->has_spc_form = true;
@@ -492,8 +492,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $tmp_txn = new MeprTransaction();
         $tmp_txn->product_id = $prd->ID;
         $tmp_txn->user_id = $usr->ID;
-        $tmp_txn->set_subtotal($sub->trial_amount);
-
+        if($sub->trial){
+            $tmp_txn->set_subtotal($sub->trial_amount);
+        }else{
+            $tmp_txn->set_subtotal($sub->total);
+        }
+    
         $amount = $sub->trial ? $sub->trial_amount : $sub->total;
         $des = isset($_REQUEST['mepr-buyer-des']) ? $_REQUEST['mepr-buyer-des'] : 'The order create by Buddy Press';
         $buyer_name = trim($_REQUEST['mepr-buyer-last-name']) . ' ' . trim($_REQUEST['mepr-buyer-first-name']);
@@ -517,6 +521,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['returnUrl'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 
         $payment_type = $_REQUEST['alepay_payment_type'];
+        set_transient( 'raw_data', json_encode($data), 60*60*12);
+
         if ($payment_type == 'international') {
             unset($data['allowDomestic']);
             unset($data['customMerchantId']);
@@ -527,6 +533,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['paymentHours'] = '1';
             $data['checkoutType'] = intval(1);
             $isCardLink = $_REQUEST['is-card-link'];
+
             if ($isCardLink == 'on') {
                 $data['isCardLink'] = true;
             } else {
@@ -534,17 +541,17 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 unset($data['merchantSideUserId']);
                 unset($data['buyerPostalCode']);
                 unset($data['buyerState']);
+            }
 
-                $result = $this->alepayAPI->sendRequestOrderInternational($data);
-                error_log(print_r($result, true));
-                if ($result->code != '000') {
-                    throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
-                } else {
-                    echo 'sendOrderToAlepayDomestic success';
-                    $checkout_url = $result->checkoutUrl;
-                    $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-                    MeprUtils::wp_redirect($checkout_url);
-                }
+            $result = $this->alepayAPI->sendRequestOrderInternational($data);
+            error_log(print_r($result, true));
+            if ($result->code != '000') {
+                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
+            } else {
+                echo 'sendOrderToAlepayDomestic success';
+                $checkout_url = $result->checkoutUrl;
+                $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+                MeprUtils::wp_redirect($checkout_url);
             }
         } else if ($payment_type == 'domestic') {
 
@@ -588,6 +595,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['callback'] = $callback . '&cardLinkRequest=1';
         error_log('before data');
         error_log(print_r($data));
+        
         $result = $this->alepayAPI->sendCardLinkRequest($data);
         if (isset($result->url)) {
             MeprUtils::wp_redirect($result->url);
@@ -943,21 +951,37 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     }else{
                         $sub->update_meta('udoo_alepay_token', $token);
                     }
-                    error_log('udooo_alepay_customer_name ' .$card_holder_name);
                     $sub->update_meta('udooo_alepay_customer_name', $card_holder_name);
                     $sub->update_meta('udooo_alepay_customer_email', $email);
                     $sub->update_meta('udooo_alepay_payment_method', $payment_method);
                     $sub->update_meta('udooo_alepay_bank_code', $bank_code);
                     $sub->store();
-                    error_log('subcription store ');
+                    return $sub;
                 }
             } else {
                 throw new MeprGatewayException(__('Thanh toán không thành công vui lòng thử lại', 'memberpress'));
             }
-        } else {
-            error_log('not have data');
         }
+        return false;
     }
+
+    public function request_tokenization_payment($sub){
+        error_log(__METHOD__);
+        $raw = json_decode(get_transient('raw_data'));
+        $data_forpayment['customerToken'] = $sub->get_meta('udoo_alepay_token',true);
+        $data_forpayment['orderCode'] = $raw->orderCode;
+        $data_forpayment['amount'] = $raw->amount;
+        $data_forpayment['currency'] = $raw->currency;
+        $data_forpayment['orderDescription'] = $raw->orderDescription;
+        $data_forpayment['returnUrl'] = $raw->returnUrl;
+        $data_forpayment['customer'] = $raw->cancelUrl;
+        $data_forpayment['paymentHours'] = '1';
+        $this->initialize_payment_api();
+        $result = $this->alepayAPI->sendTokenizationPayment($data_forpayment);
+
+        
+    }
+
 
     /** This gets called on the_content and just renders the payment form
      */
@@ -972,8 +996,14 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
         if (isset($card_link_request)) {
-            $this->record_card_link_request($txn_id);
+            $sub = $this->record_card_link_request($txn_id);
+            if(is_object($sub)){
+                $this->request_tokenization_payment($sub);
+            }else{
+                error_log('else');
+            }
         }
+
         if (isset($go_back)) {
             error_log("user cancel");
             $txn = new MeprTransaction($txn_id);
