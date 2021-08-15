@@ -920,16 +920,16 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 } else {
                     error_log('Nguoi dung lien ket thanh cong '.print_r($tokenization_payment,true));
                     //Người dùng liên kết thẻ thành công
-                    $card_link_status = $tokenization_payment['cardLinkStatus'];
-                    $email = $tokenization_payment['email'];
-                    $customer_id = $tokenization_payment['customerId'];
-                    $card_number = $tokenization_payment['cardNumber'];
-                    $card_holder_name = $tokenization_payment['cardHolderName'];
-                    $card_expire_month = $tokenization_payment['cardExpireMonth'];
-                    $card_expire_year = $tokenization_payment['cardExpireYear'];
-                    $payment_method = $tokenization_payment['paymentMethod'];
-                    $bank_code = $tokenization_payment['bankCode'];
-                    $token = $tokenization_payment['token'];
+                    $card_link_status = $tokenization_payment['data']['data']['cardLinkStatus'];
+                    $email = $tokenization_payment['data']['email'];
+                    $customer_id = $tokenization_payment['data']['customerId'];
+                    $card_number = $tokenization_payment['data']['cardNumber'];
+                    $card_holder_name = $tokenization_payment['data']['cardHolderName'];
+                    $card_expire_month = $tokenization_payment['data']['cardExpireMonth'];
+                    $card_expire_year = $tokenization_payment['data']['cardExpireYear'];
+                    $payment_method = $tokenization_payment['data']['paymentMethod'];
+                    $bank_code = $tokenization_payment['data']['bankCode'];
+                    $token = $tokenization_payment['data']['token'];
                     $cc_last4 = substr($card_number,strlen($card_number)-4,4);
                     $txn = new MeprTransaction($txn_id);
                     $sub = $txn->subscription();
