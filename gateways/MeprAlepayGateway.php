@@ -2,11 +2,6 @@
 ob_start();
 error_reporting(0);
 
-// require_once(__DIR__ . '../../Models/AlepayGateway.php');
-
-// use AlepayGatewayMemberPress\Models\AlepayGateway;
-// use AlepayGatewayMemberPress\Models\AlepayRequestAPI;
-
 require_once __DIR__ . '../../lib/Alepay.php';
 
 if (!defined('ABSPATH')) {
@@ -530,17 +525,17 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
             $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
             $data['paymentHours'] = '1';
-
+            $data['checkoutType'] = intval(1);
             $isCardLink = $_REQUEST['is-card-link'];
             if($isCardLink == 'on'){
                 $data['isCardLink'] = true;
+                $this->cardLinkReqeust($txn);
             }else{
                 $data['isCardLink'] = false;
                 unset($data['merchantSideUserId']);
                 unset($data['buyerPostalCode']);
                 unset($data['buyerState']);
-            }
-            $data['checkoutType'] = intval(1);
+                    
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
             error_log(print_r($result, true));
             if ($result->code != '000') {
@@ -551,6 +546,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
                 MeprUtils::wp_redirect($checkout_url);
             }
+            }
+        
             
         } else {
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
@@ -562,6 +559,38 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
                 MeprUtils::wp_redirect($checkout_url);
             }
+        }
+    }
+
+    public function cardLinkReqeust($txn){
+        
+        if (isset($txn) and $txn instanceof MeprTransaction) {
+            $usr = $txn->user();
+            $prd = $txn->product();
+        } else {
+            error_log('error not meprtrasaction');
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
+        }
+        $sub = $txn->subscription();
+        $data['id'] = $usr->ID;
+        $data['firstName'] = trim($_REQUEST['mepr-buyer-first-name']);
+        $data['lastName'] = trim($_REQUEST['mepr-buyer-last-name']);
+        $data['street'] = trim($_REQUEST['mepr-buyer-address']);
+        $data['city'] = trim($_REQUEST['mepr-buyer-city']);
+        $data['state'] = trim($_REQUEST['mepr-buyer-state']);
+        $data['postalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+        $data['country'] = trim($_REQUEST['mepr-buyer-country']);
+        $data['email'] = trim($_REQUEST['mepr-buyer-email']);
+        $data['phoneNumber'] = trim($_REQUEST['mepr-buyer-phone']);
+        $callback = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $data['callback'] = $callback . '&returnUrl=1';
+        error_log('before data');
+        error_log(print_r($data));
+        $result = $this->alepayAPI->sendCardLinkRequest($data);
+        if(isset($result->url)){
+            MeprUtils::wp_redirect($result->url);
+        }else{
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
     }
 
@@ -944,10 +973,13 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <span><?php echo __('Select payment type', '') ?></span>
                         <br />
                         <input type="radio" id="domestic" name="alepay_payment_type" value="domestic" checked>
-                        <label for="domestic"><?php echo __('Domestic', '') ?></label><br>
+                        <label for="domestic"><?php echo __('Thanh toán thông qua ATM, IB, QRCODE', '') ?></label><br>
                         <br />
                         <input type="radio" id="international" name="alepay_payment_type" value="international">
-                        <label for="international"><?php echo __('International', '') ?></label><br>
+                        <label for="international"><?php echo __('Thanh toán quốc tế', '') ?></label><br>
+                        <br />
+                        <input type="radio" id="one_click_payment" name="one_click_payment" value="one_click_payment">
+                        <label for="international"><?php echo __('Thanh toán nhanh 1-Click', '') ?></label><br>
                         <br />
                         <div id="card-link-container" style="display: none">
                             <input type="checkbox" id="is-card-link" name="is-card-link">
@@ -968,6 +1000,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['tokenKey'] = $token_key;
             $data['transactionCode'] = $transaction_code;
             $this->initialize_payment_api();
+            //TODO: check lại hàm get transaction info
             $result = $this->alepayAPI->getTransactionInfo($transaction_code);
             if ($result->code != '000') {
                 $txn = new MeprTransaction($txn_id);

@@ -118,9 +118,7 @@ class Alepay {
             $url = $this->baseURL['sanbox']['v3'] . $this->URI['requestPayment'];
         }
         $data['tokenKey'] = $this->apiKey;
-        error_log('before makeSignature'. print_r($this->alepayUtils,true));
         $signature = $this->alepayUtils->makeSignature($data, $this->checksumKey);
-        error_log('after makeSignature');
         $data['signature'] = $signature;
         error_log('sendOrderToAlepayDomestic ' . $url);
         $result = $this->sendRequestToAlepayV3($data, $url);
@@ -160,6 +158,7 @@ class Alepay {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestOrder'];
         }
         error_log('requestOrder ' . $url);
+        error_log(print_r($data,true));
         // $data['token'] = $this->apiKey;
         $result = $this->sendRequestToAlepay($data, $url);
         return $result;
@@ -222,10 +221,13 @@ class Alepay {
      */
 
     public function sendCardLinkRequest($data) {
-        // get demo data
-        // $data = $this->createRequestCardLinkData();
-        $data = [];
+      
+        // $url = $this->baseURL[$this->env] . $this->URI['requestCardLink'];
         $url = $this->baseURL[$this->env] . $this->URI['requestCardLink'];
+        if ($this->env == 'sanbox') {
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestCardLink'];
+        }
+
         $result = $this->sendRequestToAlepay($data, $url);
         if ($result->errorCode == '000') {
             $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
