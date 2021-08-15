@@ -170,36 +170,36 @@ class Alepay {
      * @param array|null $data
      */
 
-    public function sendOrderToAlepay($data) {
-        // get demo data
-        // $data = $this->createCheckoutData();
-        $data['returnUrl'] = $this->callbackUrl;
-        // $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
-        $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
-        $result = $this->sendRequestToAlepay($data, $url);
-        if (isset($result) && $result->errorCode == '000') {
-            $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
-            return json_decode($dataDecrypted);
-        } else {
-            return $result;
-        }
-    }
+    // public function sendOrderToAlepay($data) {
+    //     // get demo data
+    //     // $data = $this->createCheckoutData();
+    //     $data['returnUrl'] = $this->callbackUrl;
+    //     // $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
+    //     $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
+    //     $result = $this->sendRequestToAlepay($data, $url);
+    //     if (isset($result) && $result->errorCode == '000') {
+    //         $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
+    //         return json_decode($dataDecrypted);
+    //     } else {
+    //         return $result;
+    //     }
+    // }
 
-    public function sendOrderToAlepayDomestic($data) {
-        // get demo data
-        // $data = $this->createCheckoutDomesticData();
-        $data = [];
-        $data['returnUrl'] = $this->callbackUrl;
-        //  $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
-        $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
-        $result = $this->sendRequestToAlepay($data, $url);
-        if ($result->errorCode == '000') {
-            $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
-            return json_decode($dataDecrypted);
-        } else {
-            echo json_encode($result);
-        }
-    }
+    // public function sendOrderToAlepayDomestic($data) {
+    //     // get demo data
+    //     // $data = $this->createCheckoutDomesticData();
+    //     $data = [];
+    //     $data['returnUrl'] = $this->callbackUrl;
+    //     //  $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
+    //     $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
+    //     $result = $this->sendRequestToAlepay($data, $url);
+    //     if ($result->errorCode == '000') {
+    //         $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
+    //         return json_decode($dataDecrypted);
+    //     } else {
+    //         echo json_encode($result);
+    //     }
+    // }
 
     /*
      * get transaction info from Alepay
@@ -326,6 +326,7 @@ class Alepay {
     }
 
     public function decryptCallbackData($data) {
+        error_log(__METHOD__);
         return $this->alepayUtils->decryptCallbackData($data, $this->encryptKey);
     }
 

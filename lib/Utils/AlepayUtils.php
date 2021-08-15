@@ -26,6 +26,7 @@ class AlepayUtils {
 
     function decryptCallbackData($data, $publicKey) {
         $decoded = base64_decode($data);
+        error_log('decryptCallbackData IN utils');
         return $this->decryptData($decoded, $publicKey);
     }
 

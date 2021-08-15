@@ -4,7 +4,7 @@ window.addEventListener('DOMContentLoaded', function() {
     for (radio in radios) {
         radios[radio].onclick = function() {
             console.log(this.value);
-            if (this.value == 'international') {
+            if (this.value == 'international' || this.value == 'one_click_payment') {
                 document.getElementById("card-link-container").style.display = "block";
                 // document.getElementById("is-card-link").style.display = "block";
             } else {

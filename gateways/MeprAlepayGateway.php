@@ -529,7 +529,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $isCardLink = $_REQUEST['is-card-link'];
             if($isCardLink == 'on'){
                 $data['isCardLink'] = true;
-                $this->cardLinkReqeust($txn);
             }else{
                 $data['isCardLink'] = false;
                 unset($data['merchantSideUserId']);
@@ -549,7 +548,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             }
         
             
-        } else {
+        } else if($payment_type == 'domestic') {
+
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
             if ($result->code != '000') {
                 throw new MeprGatewayException(__($result->message, 'memberpress'));
@@ -559,8 +559,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
                 MeprUtils::wp_redirect($checkout_url);
             }
+        }else{
+            $this->cardLinkReqeust($txn);
         }
     }
+
 
     public function cardLinkReqeust($txn){
         
@@ -583,7 +586,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['email'] = trim($_REQUEST['mepr-buyer-email']);
         $data['phoneNumber'] = trim($_REQUEST['mepr-buyer-phone']);
         $callback = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-        $data['callback'] = $callback . '&returnUrl=1';
+        $data['callback'] = $callback . '&cardLinkRequest=1';
         error_log('before data');
         error_log(print_r($data));
         $result = $this->alepayAPI->sendCardLinkRequest($data);
@@ -902,17 +905,42 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     }
 
+    public function record_card_link_request(){
+        $this->initialize_payment_api();
+        error_log(__METHOD__);
+        $data = isset($_REQUEST['data']) ? $_REQUEST['data'] : null;
+        if(isset($data)){
+            error_log(print_r($data,true));
+            $result = $this->alepayAPI->decryptCallbackData($data);
+            $final = json_decode($result,true);
+            if($final['errorCode'] == '000'){
+                
+            }else{
+                throw new MeprGatewayException(__('Thanh toán không thành công vui lòng thử lại', 'memberpress'));
+            }
+            error_log(print_r($final,true));
+            wp_die('');
+        }else{
+            error_log('not have data');
+        }
+
+    }
+
     /** This gets called on the_content and just renders the payment form
      */
 
     public function display_payment_form($amount, $user, $product_id, $txn_id)
     {
         error_log(__METHOD__);
+        $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
         $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
         $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
         $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
+        if(isset($card_link_request)){
+            $this->record_card_link_request();
+        }
         if (isset($go_back)) {
             error_log("user cancel");
             $txn = new MeprTransaction($txn_id);
@@ -978,7 +1006,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <input type="radio" id="international" name="alepay_payment_type" value="international">
                         <label for="international"><?php echo __('Thanh toán quốc tế', '') ?></label><br>
                         <br />
-                        <input type="radio" id="one_click_payment" name="one_click_payment" value="one_click_payment">
+                        <input type="radio" id="one_click_payment" name="alepay_payment_type" value="one_click_payment">
                         <label for="international"><?php echo __('Thanh toán nhanh 1-Click', '') ?></label><br>
                         <br />
                         <div id="card-link-container" style="display: none">
