@@ -31,10 +31,10 @@ class Alepay {
         'tokenizationPayment' => '/checkout/v1/request-tokenization-payment',
         'tokenizationPaymentDomestic' => '/checkout/v1/request-tokenization-payment-domestic',
         'cancelCardLink' => '/checkout/v1/cancel-profile',
-
         'requestCardLink' => '/checkout/v1/request-profile',
         'requestCardLinkDomestic' => '/alepay-card-domestic/request-profile',
         'getListBanks' => '/get-list-banks',
+        'customerInfo'=>'/checkout/v1/get-customer-info'
     );
 
 
@@ -93,6 +93,17 @@ class Alepay {
         error_log('before init alepay utility');
         $this->alepayUtils = new \AlepayUtils();
         error_log('after init alepay utility');
+    }
+
+    public function getCustomerInfo($data){
+        error_log(__METHOD__);
+        $url = $this->baseURL[$this->env] . $this->URI['customerInfo'];
+        if ($this->env == 'sanbox') {
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['customerInfo'];
+        }
+        error_log('url .'. $url);
+        $result = $this->sendRequestToAlepay($data, $url);
+        return $result;
     }
 
      /**
@@ -222,7 +233,6 @@ class Alepay {
 
     public function sendCardLinkRequest($data) {
       
-        // $url = $this->baseURL[$this->env] . $this->URI['requestCardLink'];
         $url = $this->baseURL[$this->env] . $this->URI['requestCardLink'];
         if ($this->env == 'sanbox') {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestCardLink'];
@@ -313,8 +323,6 @@ class Alepay {
             'Content-Length: ' . strlen($data_string))
         );
         $result = curl_exec($ch);
-        // echo $result;
-        error_log(print_r($result,true));
         return json_decode($result);
     }
 
