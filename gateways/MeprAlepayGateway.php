@@ -973,12 +973,22 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data_forpayment['amount'] = $raw->amount;
         $data_forpayment['currency'] = $raw->currency;
         $data_forpayment['orderDescription'] = $raw->orderDescription;
-        $data_forpayment['returnUrl'] = $raw->returnUrl;
-        $data_forpayment['customer'] = $raw->cancelUrl;
+        $data_forpayment['returnUrl'] = $raw->returnUrl . '&onclick-success=1';
+        $data_forpayment['cancelUrl'] = $raw->cancelUrl;
         $data_forpayment['paymentHours'] = '1';
         $this->initialize_payment_api();
+        error_log('before sent'. print_r($data_forpayment,true));
         $result = $this->alepayAPI->sendTokenizationPayment($data_forpayment);
-
+        if(is_object($result)){
+            error_log( 'result' . print_r($result, true));
+            $token = $result->token;
+            $checkout_url = $result->checkoutUrl;
+            error_log( 'checkout url' .$result->checkoutUrl);
+            MeprUtils::wp_redirect($checkout_url);
+        }else{
+            error_log('MeprGatewayException');
+            throw new MeprGatewayException($result['errorDescription']);
+        }
         
     }
 
@@ -989,12 +999,25 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function display_payment_form($amount, $user, $product_id, $txn_id)
     {
         error_log(__METHOD__);
+
+        $onclick_success = isset($_REQUEST['onclick-success']) ? isset($_REQUEST['onclick-success']): null;
+
         $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
         $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
         $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
         $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
+
+        if (isset($card_link_request)) {
+            $sub = $this->record_card_link_request($txn_id);
+            if(is_object($sub)){
+                $this->request_tokenization_payment($sub);
+            }else{
+                error_log('else');
+            }
+        }
+
         if (isset($card_link_request)) {
             $sub = $this->record_card_link_request($txn_id);
             if(is_object($sub)){

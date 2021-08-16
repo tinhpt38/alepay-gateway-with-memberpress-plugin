@@ -256,8 +256,9 @@ class Alepay {
 
         $url = $this->baseURL[$this->env] . $this->URI['tokenizationPayment'];
         if ($this->env == 'sanbox') {
-            $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestCardLink'];
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['tokenizationPayment'];
         }
+        error_log('tokenizationPayment URL '.$url);
         $result = $this->sendRequestToAlepay($data, $url);
         if ($result->errorCode == '000') {
             $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
