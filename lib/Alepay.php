@@ -278,7 +278,6 @@ class Alepay {
     }
 
     public function sendTokenizationPaymentDomestic($tokenization) {
-        //$data = $this->createTokenizationPaymentDomesticData($tokenization);
         $data = [];
         $url = $this->baseURL[$this->env] . $this->URI['tokenizationPaymentDomestic'];
         $result = $this->sendRequestToAlepay($data, $url);
@@ -292,7 +291,11 @@ class Alepay {
 
     public function cancelCardLink($alepayToken) {
         $params = array('alepayToken' => $alepayToken);
+        // $url = $this->baseURL[$this->env] . $this->URI['cancelCardLink'];
         $url = $this->baseURL[$this->env] . $this->URI['cancelCardLink'];
+        if ($this->env == 'sanbox') {
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['cancelCardLink'];
+        }
         $result = $this->sendRequestToAlepay($params, $url);
         echo json_encode($result);
         if ($result->errorCode == '000') {
