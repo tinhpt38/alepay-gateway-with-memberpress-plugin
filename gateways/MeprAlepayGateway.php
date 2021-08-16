@@ -1028,8 +1028,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             // Redirect thank you page
         }
-        //return url cuar Hieeus
-
 
         //cancle url của thanh toán thường
         $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
