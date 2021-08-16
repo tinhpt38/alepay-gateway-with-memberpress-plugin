@@ -160,7 +160,6 @@ class Alepay {
         }
         error_log('requestOrder ' . $url);
         error_log(print_r($data,true));
-        // $data['token'] = $this->apiKey;
         $result = $this->sendRequestToAlepay($data, $url);
         return $result;
     }

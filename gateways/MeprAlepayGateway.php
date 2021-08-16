@@ -999,14 +999,21 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function display_payment_form($amount, $user, $product_id, $txn_id)
     {
         error_log(__METHOD__);
+        //on-payment-return success
+        $onclick_success = isset($_REQUEST['oneClickSuccess']) ? isset($_REQUEST['oneClickSuccess']): null;
+        //on-payment-return cancel
 
-        $onclick_success = isset($_REQUEST['onclick-success']) ? isset($_REQUEST['onclick-success']): null;
-
+        //link card trả về (thành công + thất bại)
         $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
+
+        //return url cuar Hieeus 
+
+        //cancle url của thanh toán thường
         $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
         $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
         $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
+        //url cancle? 
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
 
         if (isset($card_link_request)) {
