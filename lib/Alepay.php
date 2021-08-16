@@ -161,7 +161,12 @@ class Alepay {
         error_log('requestOrder ' . $url);
         error_log(print_r($data,true));
         $result = $this->sendRequestToAlepay($data, $url);
-        return $result;
+        if ($result->errorCode == '000') {
+            $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
+            return json_decode($dataDecrypted);
+        } else {
+            return $result;
+        }
     }
 
 

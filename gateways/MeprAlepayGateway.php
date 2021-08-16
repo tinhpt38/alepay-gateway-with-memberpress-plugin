@@ -3,6 +3,7 @@ ob_start();
 error_reporting(0);
 
 require_once __DIR__ . '../../lib/Alepay.php';
+require_once __DIR__ . '../../utils/AleConfiguration.php';
 
 if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
@@ -56,15 +57,15 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->settings = array();
         }
 
-        $encrypt_key = get_option('dlh_ale_encrypt_key');
-        $api_key = get_option('dlh_ale_api_key');
-        $checksum_key = get_option('dlh_ale_checksum_key');
-        $base_url_v3 = get_option('dlh_ale_base_url_v3');
-        $base_url_v1 = get_option('dlh_ale_base_url_v1');
-        $base_url_live = get_option('dlh_ale_base_url_live');
-        $email = get_option('dlh_ale_email');
-        $connected = get_option('dlh_ale_connected');
-        $test_mode = get_option('dlh_ale_is_test_mode ');
+        $encrypt_key = get_option(AleConfiguration::$ENCRYPT_KEY);
+        $api_key = get_option(AleConfiguration::$API_KEY);
+        $checksum_key = get_option(AleConfiguration::$CHECKSUM_KEY);
+        $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
+        $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
+        $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);
+        $email = get_option(AleConfiguration::$EMAIL);
+        $connected = get_option(AleConfiguration::$CONNECTED);
+        $test_mode = get_option(AleConfiguration::$TEST_MODE);
 
         $this->settings = (object)array_merge(
             array(
@@ -345,6 +346,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         //     }
         // }
 
+        error_log('Recort_payment');
         return false;
     }
 
@@ -533,6 +535,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
             $data['paymentHours'] = '1';
             $data['checkoutType'] = intval(1);
+            $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
+
             $isCardLink = $_REQUEST['is-card-link'];
 
             if ($isCardLink == 'on') {
@@ -546,10 +550,15 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
             error_log(print_r($result, true));
-            if ($result->code != '000') {
+            if (!is_object($result)) {
+                $errorObject = json_encode($result);
                 throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
             } else {
                 echo 'sendOrderToAlepayDomestic success';
+                error_log(print_r($data, true));
+
+                // $decryptedData = $this->alepayAPI->decryptCallbackData($result->data);
+
                 $checkout_url = $result->checkoutUrl;
                 $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
                 MeprUtils::wp_redirect($checkout_url);
@@ -1000,6 +1009,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function display_payment_form($amount, $user, $product_id, $txn_id)
     {
         error_log(__METHOD__);
+       // error_log('Hello world');
         //on-payment-return success
         $onclick_success = isset($_REQUEST['oneClickSuccess']) ? isset($_REQUEST['oneClickSuccess']): null;
         //on-payment-return cancel
@@ -1007,7 +1017,19 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         //link card trả về (thành công + thất bại)
         $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
 
-        //return url cuar Hieeus 
+
+
+        $international_result = isset($_REQUEST['internationalResult']) ? $_REQUEST['internationalResult'] : null;
+        if(isset($international_result)){
+            $this->initialize_payment_api();
+            $decryptedData = $this->alepayAPI->decryptCallbackData($_REQUEST['data']);
+
+            // Active subscription
+
+            // Redirect thank you page
+        }
+        //return url cuar Hieeus
+
 
         //cancle url của thanh toán thường
         $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;

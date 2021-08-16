@@ -11,6 +11,7 @@
  * Domain Path:       assets/languages
  */
 
+require_once __DIR__ . '/utils/AleConfiguration.php';
 
 add_filter('mepr-gateway-paths','ale_add_mepr_gateway_paths');
 
@@ -58,20 +59,18 @@ function ale_config_menu()
 
 function config_render()
 {
-
-    $encrypt_key = get_option('udoo_ale_encrypt_key');
-    $api_key = get_option('udoo_ale_api_key');
-    $checksum_key = get_option('udoo_ale_checksum_key');
-    $base_url_v3 = get_option('udoo_ale_base_url_v3');
-    $base_url_v1 = get_option('udoo_ale_base_url_v1');
-    $base_url_live = get_option('udoo_ale_base_url_live');
-    $email = get_option('udoo_ale_email');
-    $connected = get_option('udoo_ale_connected');
-    $test_mode = get_option('udoo_ale_is_test_mode ');
+    $encrypt_key = get_option(AleConfiguration::$ENCRYPT_KEY);
+    $api_key = get_option(AleConfiguration::$API_KEY);
+    $checksum_key = get_option(AleConfiguration::$CHECKSUM_KEY);
+    $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
+    $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
+    $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);
+    $email = get_option(AleConfiguration::$EMAIL);
+    $connected = get_option(AleConfiguration::$CONNECTED);
+    $test_mode = get_option(AleConfiguration::$TEST_MODE);
 
     $connected = $connected == true ? 'checked' : '';
     $test_mode = $test_mode == true ? 'checked' : '';
-
 ?>
 
     <h2>Configuration AlePay Gateway</h2>
