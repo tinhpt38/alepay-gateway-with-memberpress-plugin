@@ -225,9 +225,20 @@ class Alepay {
     public function getTransactionInfo($transactionCode) {
 
         $data = array('transactionCode' => $transactionCode);
-        $url = $this->baseURL[$this->env] . $this->URI['getTransactionInfo'];
+
+        $url = $this->baseURL[$this->env] . $this->URI['requestCardLink'];
+        if ($this->env == 'sanbox') {
+            $url = $this->baseURL['sanbox']['v1'] . $this->URI['getTransactionInfoV1'];
+        }
+
         $result = $this->sendRequestToAlepay($data, $url);
-        return $result;
+
+        if ($result->errorCode == '000') {
+            $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
+            return json_decode($dataDecrypted);
+        }
+
+        return null;
     }
 
     /*
