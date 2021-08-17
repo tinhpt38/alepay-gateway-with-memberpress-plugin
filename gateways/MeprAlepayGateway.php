@@ -460,23 +460,23 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Used to send subscription data to a given payment gateway. In gateways
      * which redirect before this step is necessary this method should just be
      * left blank.
+     * @throws MeprGatewayException
      */
     public function process_create_subscription($txn)
     {
-
         error_log(__METHOD__);
 
-        if (isset($txn) and $txn instanceof MeprTransaction) {
-            $usr = $txn->user();
-            $prd = $txn->product();
-        } else {
+        if (!isset($txn) || !($txn instanceof MeprTransaction)) {
             error_log('error not meprtrasaction');
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
 
-        $mepr_options = MeprOptions::fetch();
+        $usr = $txn->user();
+        $prd = $txn->product();
+
         $sub = $txn->subscription();
         $this->initialize_payment_api();
+
         update_user_meta($usr->ID, 'first_name', trim($_REQUEST['mepr-buyer-first-name']));
         update_user_meta($usr->ID, 'last_name', trim($_REQUEST['mepr-buyer-last-name']));
         update_user_meta($usr->ID, 'billing_address_1', trim($_REQUEST['mepr-buyer-address']));
@@ -495,6 +495,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $tmp_txn = new MeprTransaction();
         $tmp_txn->product_id = $prd->ID;
         $tmp_txn->user_id = $usr->ID;
+
         if ($sub->trial) {
             $tmp_txn->set_subtotal($sub->trial_amount);
         } else {
@@ -502,10 +503,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         }
 
         $amount = $sub->trial ? $sub->trial_amount : $sub->total;
+
         $des = isset($_REQUEST['mepr-buyer-des']) ? $_REQUEST['mepr-buyer-des'] : null;
-        if (!isset($des)) {
+        if (!$des) {
             $des = __('The order create by Buddy Press for product ' . $prd->post_title);
         }
+
         $buyer_name = trim($_REQUEST['mepr-buyer-last-name']) . ' ' . trim($_REQUEST['mepr-buyer-first-name']);
         $data['cancelUrl'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&returnUrl=1';
         $data['allowDomestic'] = true;
@@ -527,9 +530,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['returnUrl'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 
         $payment_type = $_REQUEST['alepay_payment_type'];
+
         set_transient('raw_data', json_encode($data), 60 * 60);
 
         if ($payment_type == 'international') {
+
             unset($data['allowDomestic']);
             unset($data['customMerchantId']);
             unset($data['installment']);
@@ -541,10 +546,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
 
             $isCardLink = $_REQUEST['is-card-link'];
+            $data['isCardLink'] = true;
 
-            if ($isCardLink == 'on') {
-                $data['isCardLink'] = true;
-            } else {
+            if ($isCardLink != 'on') {
                 $data['isCardLink'] = false;
                 unset($data['merchantSideUserId']);
                 unset($data['buyerPostalCode']);
@@ -552,31 +556,37 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             }
 
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
-            error_log(print_r($result, true));
             if (!is_object($result)) {
-                $errorObject = json_encode($result);
+                error_log('Send request order international failed');
+                error_log(print_r($result, true));
                 throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
-            } else {
-                echo 'sendOrderToAlepayDomestic success';
-                error_log(print_r($data, true));
-
-                // $decryptedData = $this->alepayAPI->decryptCallbackData($result->data);
-
-                $checkout_url = $result->checkoutUrl;
-                $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-                MeprUtils::wp_redirect($checkout_url);
             }
+
+            error_log('Send request order international succeeded');
+            error_log(print_r($result, true));
+
+            $checkout_url = $result->checkoutUrl;
+            $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+
+            MeprUtils::wp_redirect($checkout_url);
+
         } else if ($payment_type == 'domestic') {
 
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
+
             if ($result->code != '000') {
+                error_log('Send request order to alepay domestic ATM failed');
+                error_log(print_r($result, true));
                 throw new MeprGatewayException(__($result->message, 'memberpress'));
-            } else {
-                echo 'sendOrderToAlepayDomestic success';
-                $checkout_url = $result->checkoutUrl;
-                $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-                MeprUtils::wp_redirect($checkout_url);
             }
+
+            error_log('Send request order to alepay domestic ATM succeeded');
+
+            $checkout_url = $result->checkoutUrl;
+            $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+
+            MeprUtils::wp_redirect($checkout_url);
+
         } else {
             $this->request_card_link_to_alepay($txn);
         }
