@@ -1071,13 +1071,60 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
 
         $international_result = isset($_REQUEST['internationalResult']) ? $_REQUEST['internationalResult'] : null;
-        if(isset($international_result)){
+        if(isset($international_result) and $international_result == '1'){
+
             $this->initialize_payment_api();
             $decryptedData = $this->alepayAPI->decryptCallbackData($_REQUEST['data']);
 
-            // Active subscription
+            $decryptedData = json_decode($decryptedData);
 
-            // Redirect thank you page
+            $alepay_transaction_code = null;
+
+            if ($decryptedData->errorCode == '000' && !$decryptedData->cancel) {
+
+                // Thanh toán không kèm liên kết thẻ
+                if (is_string($decryptedData->data)) {
+                    // Get transaction code
+                    $alepay_transaction_code = $decryptedData->data;
+
+                    // Active subscription
+
+                    // Redirect thank you page
+                }
+
+                // Thanh toán kèm liên kết thẻ
+                // TODO: Cần lấy token
+                // TODO: Custom card link đang có vấn đề
+                else {
+
+                    $alepay_token = $decryptedData->data->alepayToken;
+                    $alepay_transaction_code = $decryptedData->data->transactionCode;
+                    $card_link_code = $decryptedData->data->cardLinkCode;
+
+                }
+
+            }
+
+            $_REQUEST['data'] = $result;
+            $transaction = $this->record_create_subscription();
+            if (gettype($transaction) == 'array') {
+                $txn = new MeprTransaction($txn_id);
+                $sub = $txn->subscription();
+                $this->activate_subscription($txn, $sub);
+                error_log('dispay update form');
+                $mepr_options = MeprOptions::fetch();
+                error_log('dispay update form');
+                $product = new MeprProduct($txn->product_id);
+                $sanitized_title = sanitize_title($product->post_title);
+
+                $query_params = array('membership' => $sanitized_title, 'trans_num' => $txn->trans_num, 'membership_id' => $product->ID);
+                if ($txn->subscription_id > 0) {
+                    $sub = $txn->subscription();
+                    $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
+                }
+                error_log('sent query ' . print_r($query_params, true));
+                MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
+            }           MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
         }
 
         //cancle url của thanh toán thường
