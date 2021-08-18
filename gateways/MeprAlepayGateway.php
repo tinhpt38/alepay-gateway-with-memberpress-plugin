@@ -1292,7 +1292,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         exit;
     }
 
-    public function handle_international_return()
+    public function handle_international_return($txn_id)
     {
         $this->initialize_payment_api();
         $decryptedData = $this->alepayAPI->decryptCallbackData($_REQUEST['data']);
@@ -1305,28 +1305,66 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             // Thanh toán không kèm liên kết thẻ
             if (is_string($decryptedData->data)) {
-
-                // Get transaction code
                 $alepay_transaction_code = $decryptedData->data;
-
-                // Active subscription
-
-                // Redirect thank you page
-
             }
-
             // Thanh toán kèm liên kết thẻ
             // TODO: Cần lấy token
             // TODO: Custom card link đang có vấn đề
             else {
-
                 $alepay_token = $decryptedData->data->alepayToken;
                 $alepay_transaction_code = $decryptedData->data->transactionCode;
                 $card_link_code = $decryptedData->data->cardLinkCode;
-
             }
-
         }
+
+        if (!$alepay_transaction_code) {
+            throw new MeprGatewayException(__('Invalid transaction code', 'memberpress'));
+        }
+
+        // Get transaction info
+        $this->initialize_payment_api();
+
+        $transaction_info = $this->alepayAPI->getTransactionInfo($alepay_transaction_code);
+
+        if (!is_object($transaction_info)) {
+            $txn = new MeprTransaction($txn_id);
+            MeprUtils::send_failed_txn_notices($txn);
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
+        }
+
+        // Record transaction
+        $_REQUEST['data'] = $transaction_info;
+        $transaction = $this->record_create_subscription();
+
+        if (!gettype($transaction) == 'array') {
+            throw new MeprGatewayException(__('Error when recording new transaction.', 'memberpress'));
+        }
+
+        // Activate subscription
+        $txn = new MeprTransaction($txn_id);
+
+        $sub = $txn->subscription();
+        $this->activate_subscription($txn, $sub);
+
+        error_log('dispay update form');
+
+        $mepr_options = MeprOptions::fetch();
+
+        error_log('dispay update form');
+
+        $product = new MeprProduct($txn->product_id);
+        $sanitized_title = sanitize_title($product->post_title);
+
+        $query_params = array('membership' => $sanitized_title, 'trans_num' => $txn->trans_num, 'membership_id' => $product->ID);
+        if ($txn->subscription_id > 0) {
+            $sub = $txn->subscription();
+            $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
+        }
+
+        error_log('sent query ' . print_r($query_params, true));
+
+        // Redirect to thank you page
+        MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
     }
 
     /**
@@ -1534,7 +1572,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         }
 
         if (isset($international_result) and $international_result == '1') {
-            $this->handle_international_return();
+            $this->handle_international_return($txn_id);
         }
 
         if (isset($recurring_onetime_domestic) and $recurring_onetime_domestic == '1') {
