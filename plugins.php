@@ -8,7 +8,7 @@
  * Author URI:        tinhpt.38@gmail.com
  * Version:           2.0.0
  * Text Domain:       alepay-gateway
- * Domain Path:       assets/languages
+ * Domain Path:       /languages
  */
 
 require_once __DIR__ . '/utils/AleConfiguration.php';
@@ -49,8 +49,8 @@ add_action('admin_menu', 'ale_config_menu');
 function ale_config_menu()
 {
     add_menu_page(
-        'Alepay Settings',
-        'Alepay Settings',
+        __('Alepay Settings','alepay-gateway'),
+        __('Alepay Settings','alepay-gateway'),
         'manage_options',
         'alepay-setting',
         'config_render'
@@ -73,7 +73,7 @@ function config_render()
     $test_mode = $test_mode == true ? 'checked' : '';
 ?>
 
-    <h2>Configuration AlePay Gateway</h2>
+    <h2><?php echo __('Configuration AlePay Gateway','alepay-gateway') ?></h2>
     <div class="alp-container">
         <form name="alepay-settings" id = "alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
             <div class="item">
@@ -142,58 +142,58 @@ function config_render()
             $test_mode = false;
         }
 
-        if (empty(get_option('udoo_ale_encrypt_key'))) {
-            add_option('udoo_ale_encrypt_key', $encrypt_key);
+        if (empty(get_option(AleConfiguration::$ENCRYPT_KEY))) {
+            add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
         } else {
-            update_option('udoo_ale_encrypt_key', $encrypt_key);
+            update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
         }
 
-        if (empty(get_option('udoo_ale_api_key'))) {
-            add_option('udoo_ale_api_key', $api_key);
+        if (empty(get_option(AleConfiguration::$API_KEY))) {
+            add_option(AleConfiguration::$API_KEY, $api_key);
         } else {
-            update_option('udoo_ale_api_key', $api_key);
+            update_option(AleConfiguration::$API_KEY, $api_key);
         }
 
-        if (empty(get_option('udoo_ale_checksum_key'))) {
-            add_option('udoo_ale_checksum_key', $checksum_key);
+        if (empty(get_option(AleConfiguration::$CHECKSUM_KEY))) {
+            add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
         } else {
-            update_option('udoo_ale_checksum_key', $checksum_key);
+            update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
         }
 
-        if (empty(get_option('udoo_ale_base_url_v3'))) {
-            add_option('udoo_ale_base_url_v3', $url_v3);
+        if (empty(get_option(AleConfiguration::$BASE_URL_V3))) {
+            add_option(AleConfiguration::$BASE_URL_V3, $url_v3);
         } else {
-            update_option('udoo_ale_base_url_v3', $url_v3);
+            update_option(AleConfiguration::$BASE_URL_V3, $url_v3);
         }
 
-        if (empty(get_option('udoo_ale_base_url_v1'))) {
-            add_option('udoo_ale_base_url_v1', $url_v1);
+        if (empty(get_option(AleConfiguration::$BASE_URL_V1))) {
+            add_option(AleConfiguration::$BASE_URL_V1, $url_v1);
         } else {
-            update_option('udoo_ale_base_url_v1', $url_v1);
+            update_option(AleConfiguration::$BASE_URL_V1, $url_v1);
         }
 
-        if (empty(get_option('udoo_ale_base_url_live'))) {
-            add_option('udoo_ale_base_url_live', $url_live);
+        if (empty(get_option(AleConfiguration::$BASE_URL_LIVE))) {
+            add_option(AleConfiguration::$BASE_URL_LIVE, $url_live);
         } else {
-            update_option('udoo_ale_base_url_live', $url_live);
+            update_option(AleConfiguration::$BASE_URL_LIVE, $url_live);
         }
 
-        if (empty(get_option('udoo_ale_email'))) {
-            add_option('udoo_ale_email', $email);
+        if (empty(get_option(AleConfiguration::$EMAIL))) {
+            add_option(AleConfiguration::$EMAIL, $email);
         } else {
-            update_option('udoo_ale_email', $email);
+            update_option(AleConfiguration::$EMAIL, $email);
         }
 
-        if (empty(get_option('udoo_ale_connected'))) {
-            add_option('udoo_ale_connected', $connected);
+        if (empty(get_option(AleConfiguration::$CONNECTED))) {
+            add_option(AleConfiguration::$CONNECTED, $connected);
         } else {
-            update_option('udoo_ale_connected', $connected);
+            update_option(AleConfiguration::$CONNECTED, $connected);
         }
 
-        if (empty(get_option('udoo_ale_is_test_mode'))) {
-            add_option('udoo_ale_is_test_mode', $test_mode);
+        if (empty(get_option(AleConfiguration::$TEST_MODE))) {
+            add_option(AleConfiguration::$TEST_MODE, $test_mode);
         } else {
-            update_option('udoo_ale_is_test_mode', $test_mode);
+            update_option(AleConfiguration::$TEST_MODE, $test_mode);
         }
     }
 }

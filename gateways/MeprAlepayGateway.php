@@ -136,51 +136,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      * before this step is necessary this method should just be left blank.
      */
 
-    /**
-    public function process_payment($txn)
-    {
-        error_log(__METHOD__);
-        if (isset($txn) and $txn instanceof MeprTransaction) {
-            $usr = $txn->user();
-            $prd = $txn->product();
-        } else {
-            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
-        }
-
-        $mepr_options = MeprOptions::fetch();
-
-        $amount = MeprUtils::format_float(($txn->total), 0);
-
-        // create the charge on Alepay's servers - this will charge the user's card
-        $args = MeprHooks::apply_filters('mepr_alepay_payment_args', array(
-            'amount' => $amount,
-            'currency' => $mepr_options->currency_code,
-            'description' => sprintf(__('%s (transaction: %s)', 'memberpress'), $prd->post_title, $txn->id),
-            'metadata' => array(
-                'platform' => 'MemberPress Connect acct_1FIIDhKEEWtO8ZWC',
-                'transaction_id' => $txn->id,
-                'site_url' => esc_url(get_site_url()),
-                'ip_address' => $_SERVER['REMOTE_ADDR']
-            )
-        ), $txn);
-
-        $this->email_status('Alepay Charge Happening Now ... ' . MeprUtils::object_to_string($args), $this->settings->debug);
-
-        // $charge = (object)$this->send_stripe_request( 'charges', $args, 'post' );//
-        $charge = new stdClass();
-        $this->email_status('Alepay Charge: ' . MeprUtils::object_to_string($charge), $this->settings->debug);
-
-        $txn->trans_num = $charge->id;
-        $txn->store();
-
-        $this->email_status('Alepay Charge Happening Now ... 2', $this->settings->debug);
-
-        $_REQUEST['data'] = $charge;
-
-        return $this->record_payment();
-    }
-    */
-
     public function process_payment($txn)
     {
         error_log(__METHOD__);
@@ -1502,11 +1457,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <input type="radio" id="domestic" name="alepay_payment_type" value="domestic" checked>
                         <label for="domestic"><?php echo __('Thanh toán thông qua ATM, IB, QRCODE', '') ?></label><br>
                         <br/>
-                        <input type="radio" id="international" name="alepay_payment_type" value="international">
-                        <label for="international"><?php echo __('Thanh toán thông thường kèm liên kết thẻ', '') ?></label><br>
-                        <br/>
                         <input type="radio" id="one_click_payment" name="alepay_payment_type" value="one_click_payment">
                         <label for="one_click_payment"><?php echo __('Thanh toán nhanh 1-Click', '') ?></label><br>
+                        <br/>
+                        <input type="radio" id="international" name="alepay_payment_type" value="international">
+                        <label for="international"><?php echo __('Thanh toán thông thường kèm liên kết thẻ', '') ?></label><br>
                         <br/>
                         <div id="card-link-container" style="display: none">
                             <input type="checkbox" id="is-card-link" name="is-card-link">
