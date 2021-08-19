@@ -18,10 +18,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function __construct()
     {
         error_log(__METHOD__);
-        $this->name = __("Alepay", 'memberpress');
+        $this->name = __("Alepay", 'alepay-gateway');
         $this->icon = plugins_url('/alepay-gateway') . '/images/alepay.png';
-        $this->desc = __('Thanh toán bằng cổng thanh toán Alepay', 'memberpress');
-        $this->key = __('Alepay', 'memberpress');
+        $this->desc = __('Thanh toán bằng cổng thanh toán Alepay', 'alepay-gateway');
+        $this->key = __('Alepay', 'alepay-gateway');
         $this->set_defaults();
         $this->has_spc_form = true;
 
@@ -1449,23 +1449,23 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     <input type="hidden" name="mepr_transaction_id" value="<?php echo $txn->id; ?>" />
                     <?php MeprHooks::do_action('mepr-paystack-payment-form', $txn); ?>
                     <div class="mepr_spacer">&nbsp;</div>
-                    <label class="mepr-buyer-first-name">Tên và tên đệm (*)</label>
+                    <label class="mepr-buyer-first-name"><?php echo __('First name', 'alepay-gateway') .' (*)' ?></label>
                     <input type=text name="mepr-buyer-first-name" value="<?php echo $user->first_name ?>">
-                    <label class="mepr-buyer-last-name">Họ (*)</label>
+                    <label class="mepr-buyer-last-name"><?php echo __('Last name','alepay-gateway') .' (*)' ?></label>
                     <input type=text name="mepr-buyer-last-name" value="<?php echo $user->last_name ?>">
-                    <label class="mepr-buyer-email">Email (*)</label>
+                    <label class="mepr-buyer-email"><?php echo __('Email','alepay-gateway'). ' (*)'?></label>
                     <input type="email" name="mepr-buyer-email" value="<?php echo $user->user_email ?>">
-                    <label class="mepr-buyer-phone">Số điện thoại (*)</label>
+                    <label class="mepr-buyer-phone"> <?php echo __('Phone','alepay-gateway') . '(*)' ?></label>
                     <?php $phone = get_user_meta($user->ID, 'billing_phone', true); ?>
                     <input type="text" name="mepr-buyer-phone" value="<?php echo $phone ?>">
-                    <label class="mepr-buyer-address">Địa chỉ (*)</label>
+                    <label class="mepr-buyer-address"><?php echo __('Address','alepay-gateway') . ' (*)'?></label>
                     <?php $address = get_user_meta($user->ID, 'billing_address_1', true); ?>
                     <input type="text" name="mepr-buyer-address" value="<?php echo $address ?>">
-                    <label class="mepr-buyer-city">Thành phố (*)</label>
+                    <label class="mepr-buyer-city"><?php echo __('City','alepay-gateway') . ' (*)'?></label>
                     <?php $city = get_user_meta($user->ID, 'billing_city', true); ?>
                     <input type="text" name="mepr-buyer-city" value="<?php echo $city ?>">
 
-                    <label class="mepr-buyer-state">Tỉnh (*)</label>
+                    <label class="mepr-buyer-state"><?php  echo __('State','alepay-gateway') . ' (*)' ?></label>
                     <?php $state = get_user_meta($user->ID, 'billing_state', true); ?>
                     <input type="text" name="mepr-buyer-state" value="<?php echo $state ?>">
 
@@ -1473,37 +1473,37 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     <?php $pcode = get_user_meta($user->ID, 'billing_post_code', true); ?>
                     <input type="text" name="mepr-buyer-postal-code" value="<?php echo $pcode ?>">
                     <?php $country = get_user_meta($user->ID, 'billing_country', true); ?>
-                    <label class="mepr-buyer-country">Quốc gia (*)</label>
+                    <label class="mepr-buyer-country"><?php echo __('Country','alepay-gateway') . ' (*)'?></label>
                     <input type="text" name="mepr-buyer-country" value="<?php echo $country ?>">
-                    <label class="mepr-buyer-des">Mô tả</label>
+                    <label class="mepr-buyer-des"><?php echo __('Description','alepay-gateway'). ' (*)'?></label>
                     <input type="text" name="mepr-buyer-des">
-                    <label>(*) Các trường dữ liệu không được để trống</label>
-                    <span><?php echo __('Select payment type', '') ?></span>
+                    <label><?php echo '(*) '. __('Data fields cannot be left blank','alepay-gateway')?></label>
+                    <span><?php echo __('Select payment type', 'alepay-gateway') ?></span>
 
                     <?php if ($is_one_time_product) : ?>
 
                         <br />
                         <input type="radio" id="one-time-domestic" name="alepay_payment_type" value="one-time-domestic" checked>
-                        <label for="one-time-domestic"><?php echo __('Thanh toán nội địa thông qua ATM, IB, QRCODE', '') ?></label><br>
+                        <label for="one-time-domestic"><?php echo __('Domestic: ATM, IB, QRCODE', 'alepay-gateway') ?></label><br>
 
                         <br />
                         <input type="radio" id="one-time-international" name="alepay_payment_type" value="one-time-international">
-                        <label for="one-time-international"><?php echo __('Thanh toán quốc tế thông qua Visa, MasterCard', '') ?></label>
+                        <label for="one-time-international"><?php echo __('International: VISA, MasterCard', 'alepay-gateway') ?></label>
 
                     <?php else : ?>
                         <br />
                         <input type="radio" id="domestic" name="alepay_payment_type" value="domestic" checked>
-                        <label for="domestic"><?php echo __('Thanh toán thông qua ATM, IB, QRCODE', '') ?></label><br>
+                        <label for="domestic"><?php echo __('Domestic: ATM, IB, QRCODE', 'alepay-gateway') ?></label><br>
                         <br />
                         <input type="radio" id="one_click_payment" name="alepay_payment_type" value="one_click_payment">
-                        <label for="one_click_payment"><?php echo __('Thanh toán nhanh 1-Click', '') ?></label><br>
+                        <label for="one_click_payment"><?php echo __('One Click Payment', 'aleapy-gateway') ?></label><br>
                         <br />
                         <input type="radio" id="international" name="alepay_payment_type" value="international">
-                        <label for="international"><?php echo __('Thanh toán thông thường kèm liên kết thẻ', '') ?></label><br>
+                        <label for="international"><?php echo __('International: VISA, MasterCard...', 'alepay-gateway') ?></label><br>
                         <br />
                         <div id="card-link-container" style="display: none">
                             <input type="checkbox" id="is-card-link" name="is-card-link">
-                            <label for="is-card-link"><?php echo __('Tôi đồng ý liên kết thẻ') ?></label>
+                            <label for="is-card-link"><?php echo __('I agree to link my card to the website') ?></label>
                         </div>
                     <?php endif; ?>
 
@@ -1689,35 +1689,36 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <div class="mp-form-label">
 
                             <div id="card-element" class="mepr-alepay-card-element">
-                                <label class="mepr-buyer-first-name">Tên và tên đệm (*)</label>
-                                <input type=text name="mepr-buyer-first-name" value="<?php echo $user->first_name ?>">
-                                <label class="mepr-buyer-last-name">Họ (*)</label>
-                                <input type=text name="mepr-buyer-last-name" value="<?php echo $user->last_name ?>">
-                                <label class="mepr-buyer-email">Email (*)</label>
-                                <input type="email" name="mepr-buyer-email" value="<?php echo $user->user_email ?>">
-                                <label class="mepr-buyer-phone">Số điện thoại (*)</label>
-                                <?php $phone = get_user_meta($user->ID, 'billing_phone', true); ?>
-                                <input type="text" name="mepr-buyer-phone" value="<?php echo $phone ?>">
-                                <label class="mepr-buyer-address">Địa chỉ (*)</label>
-                                <?php $address = get_user_meta($user->ID, 'billing_address_1', true); ?>
-                                <input type="text" name="mepr-buyer-address" value="<?php echo $address ?>">
-                                <label class="mepr-buyer-city">Thành phố (*)</label>
-                                <?php $city = get_user_meta($user->ID, 'billing_city', true); ?>
-                                <input type="text" name="mepr-buyer-city" value="<?php echo $city ?>">
+                            <label class="mepr-buyer-first-name"><?php echo __('First name', 'alepay-gateway') .' (*)' ?></label>
+                    <input type=text name="mepr-buyer-first-name" value="<?php echo $user->first_name ?>">
+                    <label class="mepr-buyer-last-name"><?php echo __('Last name','alepay-gateway') .' (*)' ?></label>
+                    <input type=text name="mepr-buyer-last-name" value="<?php echo $user->last_name ?>">
+                    <label class="mepr-buyer-email"><?php echo __('Email','alepay-gateway'). ' (*)'?></label>
+                    <input type="email" name="mepr-buyer-email" value="<?php echo $user->user_email ?>">
+                    <label class="mepr-buyer-phone"> <?php echo __('Phone','alepay-gateway') . '(*)' ?></label>
+                    <?php $phone = get_user_meta($user->ID, 'billing_phone', true); ?>
+                    <input type="text" name="mepr-buyer-phone" value="<?php echo $phone ?>">
+                    <label class="mepr-buyer-address"><?php echo __('Address','alepay-gateway') . ' (*)'?></label>
+                    <?php $address = get_user_meta($user->ID, 'billing_address_1', true); ?>
+                    <input type="text" name="mepr-buyer-address" value="<?php echo $address ?>">
+                    <label class="mepr-buyer-city"><?php echo __('City','alepay-gateway') . ' (*)'?></label>
+                    <?php $city = get_user_meta($user->ID, 'billing_city', true); ?>
+                    <input type="text" name="mepr-buyer-city" value="<?php echo $city ?>">
 
-                                <label class="mepr-buyer-state">Tỉnh (*)</label>
-                                <?php $state = get_user_meta($user->ID, 'billing_state', true); ?>
-                                <input type="text" name="mepr-buyer-state" value="<?php echo $state ?>">
+                    <label class="mepr-buyer-state"><?php  echo __('State','alepay-gateway') . ' (*)' ?></label>
+                    <?php $state = get_user_meta($user->ID, 'billing_state', true); ?>
+                    <input type="text" name="mepr-buyer-state" value="<?php echo $state ?>">
 
-                                <label class="mepr-buyer-postal-code">Postal Code (*)</label>
-                                <?php $pcode = get_user_meta($user->ID, 'billing_post_code', true); ?>
-                                <input type="text" name="mepr-buyer-postal-code" value="<?php echo $pcode ?>">
-                                <?php $country = get_user_meta($user->ID, 'billing_country', true); ?>
-                                <label class="mepr-buyer-country">Quốc gia (*)</label>
-                                <input type="text" name="mepr-buyer-country" value="<?php echo $country ?>">
-                                <?php $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>
-                                <input type="hidden" name="mepr-buyer-des" value="<?php echo 'The charge form ' . $callback . ' with Subcription ' . $sub->id ?>">
-                                <label>(*) Các trường dữ liệu không được để trống</label>
+                    <label class="mepr-buyer-postal-code">Postal Code (*)</label>
+                    <?php $pcode = get_user_meta($user->ID, 'billing_post_code', true); ?>
+                    <input type="text" name="mepr-buyer-postal-code" value="<?php echo $pcode ?>">
+                    <?php $country = get_user_meta($user->ID, 'billing_country', true); ?>
+                    <label class="mepr-buyer-country"><?php echo __('Country','alepay-gateway') . ' (*)'?></label>
+                    <input type="text" name="mepr-buyer-country" value="<?php echo $country ?>">
+                    <label class="mepr-buyer-des"><?php echo __('Description','alepay-gateway'). ' (*)'?></label>
+                    <input type="text" name="mepr-buyer-des">
+                    <label><?php echo '(*) '. __('Data fields cannot be left blank','alepay-gateway')?></label>
+                    <span><?php echo __('Select payment type', 'alepay-gateway') ?></span>
                                 <?php MeprView::render('/shared/has_errors', get_defined_vars()); ?>
                             </div>
                         </div>

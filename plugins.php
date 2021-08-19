@@ -13,7 +13,17 @@
 
 require_once __DIR__ . '/utils/AleConfiguration.php';
 
-add_filter('mepr-gateway-paths','ale_add_mepr_gateway_paths');
+
+
+function alepay_plugin_load_textdomain()
+{
+
+    load_plugin_textdomain('alepay-gateway', false, basename(dirname(__FILE__)) . '/languages/');
+}
+add_action('init', 'alepay_plugin_load_textdomain');
+
+
+add_filter('mepr-gateway-paths', 'ale_add_mepr_gateway_paths');
 
 function ale_add_mepr_gateway_paths($tabs)
 {
@@ -30,13 +40,13 @@ add_action('wp_enqueue_scripts', 'ale_enqueue_scripts');
 function ale_enqueue_scripts()
 {
 
-    wp_register_script('alepay-js-native',plugins_url('/config.js', __FILE__), array('jquery'), null, true);
+    wp_register_script('alepay-js-native', plugins_url('/config.js', __FILE__), array('jquery'), null, true);
     wp_localize_script('alepay-js-native', 'ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
     wp_enqueue_script('alepay-js-native');
-  
 }
 
-function ale_admin_enqueue_scripts(){
+function ale_admin_enqueue_scripts()
+{
 
     wp_register_style('alepay-gateway-native-css', plugins_url('/styles.css', __FILE__));
     wp_enqueue_style('alepay-gateway-native-css');
@@ -49,8 +59,8 @@ add_action('admin_menu', 'ale_config_menu');
 function ale_config_menu()
 {
     add_menu_page(
-        __('Alepay Settings','alepay-gateway'),
-        __('Alepay Settings','alepay-gateway'),
+        __('Alepay Settings', 'alepay-gateway'),
+        __('Alepay Settings', 'alepay-gateway'),
         'manage_options',
         'alepay-setting',
         'config_render'
@@ -73,9 +83,9 @@ function config_render()
     $test_mode = $test_mode == true ? 'checked' : '';
 ?>
 
-    <h2><?php echo __('Configuration AlePay Gateway','alepay-gateway') ?></h2>
+    <h2><?php echo __('Configuration AlePay Gateway', 'alepay-gateway') ?></h2>
     <div class="alp-container">
-        <form name="alepay-settings" id = "alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
+        <form name="alepay-settings" id="alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
             <div class="item">
                 <label for="alepay_encrypt_key">Encrypt</label>
                 <input name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
