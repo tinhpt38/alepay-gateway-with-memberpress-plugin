@@ -11,9 +11,16 @@
  * Domain Path:       assets/languages
  */
 
-require_once __DIR__ . '/utils/AleConfiguration.php';
+require_once __DIR__ . './utils/AleConfiguration.php';
+require_once __DIR__ . './gateways/DLHMemeberpressWebhookHandler.php';
 
-add_filter('mepr-gateway-paths','ale_add_mepr_gateway_paths');
+/**
+ * Add custom AJAX for webhook
+ */
+$instance = new DLHMemeberpressWebhookHandler();
+
+
+add_filter('mepr-gateway-paths', 'ale_add_mepr_gateway_paths');
 
 function ale_add_mepr_gateway_paths($tabs)
 {
@@ -30,13 +37,14 @@ add_action('wp_enqueue_scripts', 'ale_enqueue_scripts');
 function ale_enqueue_scripts()
 {
 
-    wp_register_script('alepay-js-native',plugins_url('/config.js', __FILE__), array('jquery'), null, true);
+    wp_register_script('alepay-js-native', plugins_url('/config.js', __FILE__), array('jquery'), null, true);
     wp_localize_script('alepay-js-native', 'ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
     wp_enqueue_script('alepay-js-native');
-  
+
 }
 
-function ale_admin_enqueue_scripts(){
+function ale_admin_enqueue_scripts()
+{
 
     wp_register_style('alepay-gateway-native-css', plugins_url('/styles.css', __FILE__));
     wp_enqueue_style('alepay-gateway-native-css');
@@ -71,11 +79,12 @@ function config_render()
 
     $connected = $connected == true ? 'checked' : '';
     $test_mode = $test_mode == true ? 'checked' : '';
-?>
+    ?>
 
     <h2>Configuration AlePay Gateway</h2>
     <div class="alp-container">
-        <form name="alepay-settings" id = "alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
+        <form name="alepay-settings" id="alepay-settings" method="post"
+              action="<?php echo admin_url('?page=alepay-setting'); ?>">
             <div class="item">
                 <label for="alepay_encrypt_key">Encrypt</label>
                 <input name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
@@ -120,7 +129,7 @@ function config_render()
         </form>
     </div>
 
-<?php
+    <?php
 
     if (isset($_POST['alepay-setting-submit'])) {
         $encrypt_key = sanitize_text_field($_POST['alepay_encrypt_key']);
