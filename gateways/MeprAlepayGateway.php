@@ -162,8 +162,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         // TODO: txn amount
         if ($prd->trial) {
             $txn->set_subtotal($prd->trial_amount);
-        }
-        else {
+        } else {
             $txn->set_subtotal($prd->price);
         }
 
@@ -234,9 +233,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
 
             MeprUtils::wp_redirect($checkout_url);
-
-        }
-        else if ($payment_type == 'one-time-domestic') {
+        } else if ($payment_type == 'one-time-domestic') {
 
             $data['returnUrl'] = $data['returnUrl'] . '&onetimeDomesticResult=1';
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
@@ -253,9 +250,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
 
             MeprUtils::wp_redirect($checkout_url);
-
-        }
-        else {
+        } else {
             throw new MeprGatewayException(__('Invalid payment type', 'memberpress'));
         }
     }
@@ -375,56 +370,56 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_payment($charge = null)
     {
-         error_log('record_payment');
-         $this->email_status("Starting record_payment: " . MeprUtils::object_to_string($_REQUEST), $this->settings->debug);
+        error_log('record_payment');
+        $this->email_status("Starting record_payment: " . MeprUtils::object_to_string($_REQUEST), $this->settings->debug);
 
-         if (empty($charge)) {
-             $charge = isset($_REQUEST['data']) ? (object)$_REQUEST['data'] : [];
-         } else {
-             $charge = (object)$charge;
-         }
+        if (empty($charge)) {
+            $charge = isset($_REQUEST['data']) ? (object)$_REQUEST['data'] : [];
+        } else {
+            $charge = (object)$charge;
+        }
 
-         if (!empty($charge)) {
-             $this->email_status("record_payment: \n" . MeprUtils::object_to_string($charge, true) . "\n", $this->settings->debug);
-             $obj = MeprTransaction::get_one_by_trans_num($charge->id);
+        if (!empty($charge)) {
+            $this->email_status("record_payment: \n" . MeprUtils::object_to_string($charge, true) . "\n", $this->settings->debug);
+            $obj = MeprTransaction::get_one_by_trans_num($charge->id);
 
-             if (is_object($obj) and isset($obj->id)) {
-                 $txn = new MeprTransaction();
-                 $txn->load_data($obj);
-                 $usr = $txn->user();
+            if (is_object($obj) and isset($obj->id)) {
+                $txn = new MeprTransaction();
+                $txn->load_data($obj);
+                $usr = $txn->user();
 
-                 // Just short circuit if the txn has already completed
-                 if ($txn->status == MeprTransaction::$complete_str)
-                     return;
+                // Just short circuit if the txn has already completed
+                if ($txn->status == MeprTransaction::$complete_str)
+                    return;
 
-                 $txn->status = MeprTransaction::$complete_str;
-                 // This will only work before maybe_cancel_old_sub is run
-                 $upgrade = $txn->is_upgrade();
-                 $downgrade = $txn->is_downgrade();
+                $txn->status = MeprTransaction::$complete_str;
+                // This will only work before maybe_cancel_old_sub is run
+                $upgrade = $txn->is_upgrade();
+                $downgrade = $txn->is_downgrade();
 
-                 $event_txn = $txn->maybe_cancel_old_sub();
-                 $txn->store();
+                $event_txn = $txn->maybe_cancel_old_sub();
+                $txn->store();
 
-                 $this->email_status("Standard Transaction\n" . MeprUtils::object_to_string($txn->rec, true) . "\n", $this->settings->debug);
+                $this->email_status("Standard Transaction\n" . MeprUtils::object_to_string($txn->rec, true) . "\n", $this->settings->debug);
 
-                 $prd = $txn->product();
+                $prd = $txn->product();
 
-                 if ($prd->period_type == 'lifetime') {
-                     if ($upgrade) {
-                         $this->upgraded_sub($txn, $event_txn);
-                     } else if ($downgrade) {
-                         $this->downgraded_sub($txn, $event_txn);
-                     } else {
-                         $this->new_sub($txn);
-                     }
+                if ($prd->period_type == 'lifetime') {
+                    if ($upgrade) {
+                        $this->upgraded_sub($txn, $event_txn);
+                    } else if ($downgrade) {
+                        $this->downgraded_sub($txn, $event_txn);
+                    } else {
+                        $this->new_sub($txn);
+                    }
 
-                     MeprUtils::send_signup_notices($txn);
-                 }
+                    MeprUtils::send_signup_notices($txn);
+                }
 
-                 MeprUtils::send_transaction_receipt_notices($txn);
-                 MeprUtils::send_cc_expiration_notices($txn);
-             }
-         }
+                MeprUtils::send_transaction_receipt_notices($txn);
+                MeprUtils::send_cc_expiration_notices($txn);
+            }
+        }
 
         error_log('Recort_payment');
         return false;
@@ -649,13 +644,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             $checkout_url = $result->checkoutUrl;
             $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-
             MeprUtils::wp_redirect($checkout_url);
+        } else if ($payment_type == 'domestic') {
 
-        }
-        else if ($payment_type == 'domestic') {
-
-            $data['returnUrl'] = $data['returnUrl'] . '&domesticResult=1';
+            $data['returnUrl'] = $data['returnUrl'] . '&domesticResultUserCancel=1';
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
 
             if ($result->code != '000') {
@@ -670,12 +662,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
 
             MeprUtils::wp_redirect($checkout_url);
-
-        }
-        else if ($payment_type == 'one_click_payment') {
+        } else if ($payment_type == 'one_click_payment') {
             $this->process_one_click_payment($txn);
-        }
-        else {
+        } else {
             throw new MeprGatewayException(__('Invalid payment type', 'memberpress'));
         }
     }
@@ -697,12 +686,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     public function process_internation_payment($txn)
     {
-
     }
 
     public function process_domestic_payment($txn)
     {
-
     }
 
     public function process_one_click_payment($txn)
@@ -1135,7 +1122,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data = json_decode($result, true);
 
             return $data;
-
         }
 
         return false;
@@ -1175,6 +1161,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         $txn = new MeprTransaction($txn_id);
 
                         $sub = $txn->subscription();
+                        $sub->add_meta('payment_method', 'one_click_payment');
                         $this->activate_subscription($txn, $sub);
 
                         error_log('dispay update form');
@@ -1213,7 +1200,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
                     return;
                 }
-
             } else {
                 error_log('result FAILED');
 
@@ -1234,7 +1220,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
             return;
         }
-
     }
 
     public function handle_one_click_cancel($txn_id)
@@ -1401,14 +1386,13 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $invoice = MeprTransactionsHelper::get_invoice($txn);
         echo $invoice;
-        ?>
+?>
         <div class="mp_wrapper mp_payment_form_wrapper">
             <div class="mp_wrapper mp_payment_form_wrapper">
                 <?php MeprView::render('/shared/errors', get_defined_vars()); ?>
-                <form action="" method="post" id="mepr_alepay_payment_form" name="mepr_alepay_payment_form"
-                      class="mepr-checkout-form mepr-form mepr-card-form" novalidate>
-                    <input type="hidden" name="mepr_process_payment_form" value="Y"/>
-                    <input type="hidden" name="mepr_transaction_id" value="<?php echo $txn->id; ?>"/>
+                <form action="" method="post" id="mepr_alepay_payment_form" name="mepr_alepay_payment_form" class="mepr-checkout-form mepr-form mepr-card-form" novalidate>
+                    <input type="hidden" name="mepr_process_payment_form" value="Y" />
+                    <input type="hidden" name="mepr_transaction_id" value="<?php echo $txn->id; ?>" />
                     <?php MeprHooks::do_action('mepr-paystack-payment-form', $txn); ?>
                     <div class="mepr_spacer">&nbsp;</div>
                     <label class="mepr-buyer-first-name">Tên và tên đệm (*)</label>
@@ -1442,43 +1426,42 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     <label>(*) Các trường dữ liệu không được để trống</label>
                     <span><?php echo __('Select payment type', '') ?></span>
 
-                    <?php if ($is_one_time_product): ?>
+                    <?php if ($is_one_time_product) : ?>
 
-                        <br/>
+                        <br />
                         <input type="radio" id="one-time-domestic" name="alepay_payment_type" value="one-time-domestic" checked>
                         <label for="one-time-domestic"><?php echo __('Thanh toán nội địa thông qua ATM, IB, QRCODE', '') ?></label><br>
 
-                        <br/>
+                        <br />
                         <input type="radio" id="one-time-international" name="alepay_payment_type" value="one-time-international">
                         <label for="one-time-international"><?php echo __('Thanh toán quốc tế thông qua Visa, MasterCard', '') ?></label>
 
-                    <?php else: ?>
-                        <br/>
+                    <?php else : ?>
+                        <br />
                         <input type="radio" id="domestic" name="alepay_payment_type" value="domestic" checked>
                         <label for="domestic"><?php echo __('Thanh toán thông qua ATM, IB, QRCODE', '') ?></label><br>
-                        <br/>
+                        <br />
                         <input type="radio" id="one_click_payment" name="alepay_payment_type" value="one_click_payment">
                         <label for="one_click_payment"><?php echo __('Thanh toán nhanh 1-Click', '') ?></label><br>
-                        <br/>
+                        <br />
                         <input type="radio" id="international" name="alepay_payment_type" value="international">
                         <label for="international"><?php echo __('Thanh toán thông thường kèm liên kết thẻ', '') ?></label><br>
-                        <br/>
+                        <br />
                         <div id="card-link-container" style="display: none">
                             <input type="checkbox" id="is-card-link" name="is-card-link">
                             <label for="is-card-link"><?php echo __('Tôi đồng ý liên kết thẻ') ?></label>
                         </div>
                     <?php endif; ?>
 
-                    <input type="submit" class="mepr-submit" value="<?php _e('Pay Now', 'memberpress'); ?>"/>
+                    <input type="submit" class="mepr-submit" value="<?php _e('Pay Now', 'memberpress'); ?>" />
 
-                    <img src="<?php echo admin_url('images/loading.gif'); ?>" style="display: none;"
-                         class="mepr-loading-gif"/>
+                    <img src="<?php echo admin_url('images/loading.gif'); ?>" style="display: none;" class="mepr-loading-gif" />
                     <?php MeprView::render('/shared/has_errors', get_defined_vars()); ?>
                 </form>
             </div>
         </div>
 
-        <?php
+    <?php
 
     }
 
@@ -1632,77 +1615,32 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         // }
     }
 
-    /** Displays the update account form on the subscription account page **/
-    public function display_update_account_form($sub_id, $errors = array(), $message = '')
+
+    public function render_update_form($user, $sub, $mepr_options)
     {
         error_log(__METHOD__);
-        error_log(__METHOD__);
-        $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
-        $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
-        $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
-        $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
-        $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
-        if (isset($go_back)) {
-            // error_log("user cancel");
-            // $txn = new MeprTransaction($txn_id);
-            // MeprUtils::send_failed_txn_notices($txn);
-            echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-            echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
-        } else if ($error_code != '000') {
-            $mepr_options = MeprOptions::fetch();
-            $sub = new MeprSubscription($sub_id);
-            $user = $sub->user();
-            if (MeprUtils::is_post_request() && empty($errors) && !empty($_POST['mepr_alepay_update_is_payment'])) {
-                $message = __('Update successful, please allow some time for the payment to process. Your account will reflect the updated payment soon.', 'memberpress');
-            }
-            ?>
-            <div class="mp_wrapper">
-                <form action="" method="post" id="mepr-alepay-payment-form"
-                      data-sub-id="<?php echo esc_attr($sub->id); ?>">
-                    <input type="hidden" name="_mepr_nonce"
-                           value="<?php echo wp_create_nonce('mepr_process_update_account_form'); ?>"/>
-                    <input type="hidden" name="address_required"
-                           value="<?php echo $mepr_options->show_address_fields && $mepr_options->require_address_fields ? 1 : 0 ?>"/>
+        $payment_method = $sub->get_meta('payment_method');
+        error_log($payment_method);
+    ?>
+        <div class="mp_wrapper">
+            <form action="" method="post" id="mepr-alepay-payment-form" data-sub-id="<?php echo esc_attr($sub->id); ?>">
+                <input type="hidden" name="_mepr_nonce" value="<?php echo wp_create_nonce('mepr_process_update_account_form'); ?>" />
+                <input type="hidden" name="address_required" value="<?php echo $mepr_options->show_address_fields && $mepr_options->require_address_fields ? 1 : 0 ?>" />
+                <input type="hidden" name="payment_method" value="<?php echo $payment_method ?>" />
+                <div class="mepr_update_account_table">
 
-                    <?php
-                    if ($user instanceof MeprUser) {
-                        MeprView::render("/checkout/MeprStripeGateway/payment_gateway_fields", get_defined_vars());
-                    }
-                    ?>
+                    <div class="mepr-alepay-errors"></div>
+                    <?php MeprView::render('/shared/errors', get_defined_vars()); ?>
+                    <div class="mp-form-row">
+                        <div class="mp-form-label">
 
-                    <div class="mepr_update_account_table">
-                        <div><strong><?php _e('Update your Credit Card information below', 'memberpress'); ?></strong>
-                        </div>
-                        <br/>
-                        <div class="mepr-alepay-errors"></div>
-                        <?php MeprView::render('/shared/errors', get_defined_vars()); ?>
-
-                        <div class="mp-form-row">
-                            <div class="mp-form-label">
-                                <label for="mepr_alepay_card_name"><?php _e('Name on the card:*', 'memberpress'); ?></label>
-                                <span class="cc-error"><?php _ex('Name on the card is required.', 'ui', 'memberpress'); ?></span>
-                            </div>
-                            <input type="text" name="card-name" id="mepr_alepay_card_name"
-                                   class="mepr-form-input alepay-card-name" required
-                                   value="<?php echo esc_attr($user->get_full_name()); ?>"/>
-                        </div>
-
-                        <div class="mp-form-row">
-                            <div class="mp-form-label">
-                                <label><?php _ex('Credit Card', 'ui', 'memberpress'); ?></label>
-                                <span id="card-errors" role="alert" class="mepr-alepay-card-errors"></span>
-                            </div>
                             <div id="card-element" class="mepr-alepay-card-element">
-                                <!-- a alepay Element will be inserted here. -->
-
-                                <input type="hidden" name="mepr_process_payment_form" value="Y"/>
+                                <input type="hidden" name="mepr_process_payment_form" value="Y" />
                                 <div class="mepr_spacer">&nbsp;</div>
                                 <label class="mepr-buyer-first-name">Tên và tên đệm (*)</label>
-                                <input type=text name="mepr-buyer-first-name" required
-                                       value="<?php echo $user->first_name ?>">
+                                <input type=text name="mepr-buyer-first-name" required value="<?php echo $user->first_name ?>">
                                 <label class="mepr-buyer-last-name">Họ (*)</label>
-                                <input type=text name="mepr-buyer-last-name" required
-                                       value="<?php echo $user->last_name ?>">
+                                <input type=text name="mepr-buyer-last-name" required value="<?php echo $user->last_name ?>">
                                 <label class="mepr-buyer-email">Email (*)</label>
                                 <input type="email" name="mepr-buyer-email" value="<?php echo $user->user_email ?>">
                                 <label class="mepr-buyer-phone">Số điện thoại (*)</label>
@@ -1717,50 +1655,124 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                                 <?php $country = get_user_meta($user->ID, 'billing_country', true); ?>
                                 <label class="mepr-buyer-country">Quốc gia (*)</label>
                                 <input type="text" name="mepr-buyer-country" required value="<?php echo $country ?>">
-                                <label class="mepr-buyer-des">Mô tả</label>
-                                <input type="text" name="mepr-buyer-des">
+                                <?php  $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]" ?>
+                                <input type="hidden" name="mepr-buyer-des" value="<?php echo 'The charge form ' . $callback . 'with Subcription '. $sub->id?>">
                                 <label>(*) Các trường dữ liệu không được để trống</label>
                                 <?php MeprView::render('/shared/has_errors', get_defined_vars()); ?>
                             </div>
                         </div>
 
                         <div class="mepr_spacer">&nbsp;</div>
-                        <input type="submit" class="mepr-submit" value="<?php _ex('Submit', 'ui', 'memberpress'); ?>"/>
-                        <img src="<?php echo admin_url('images/loading.gif'); ?>"
-                             alt="<?php _e('Loading...', 'memberpress'); ?>" style="display: none;"
-                             class="mepr-loading-gif"/>
+                        <input type="submit" class="mepr-submit" value="<?php _ex('Submit', 'ui', 'memberpress'); ?>" />
+                        <img src="<?php echo admin_url('images/loading.gif'); ?>" alt="<?php _e('Loading...', 'memberpress'); ?>" style="display: none;" class="mepr-loading-gif" />
 
                         <noscript>
                             <p class="mepr_nojs"><?php _e('Javascript is disabled in your browser. You will not be able to complete your purchase until you either enable JavaScript in your browser, or switch to a browser that supports it.', 'memberpress'); ?></p>
                         </noscript>
                     </div>
-                </form>
-            </div>
+            </form>
+        </div>
+<?php
+    }
 
-            <?php
+
+    /** Displays the update account form on the subscription account page **/
+    public function display_update_account_form($sub_id, $errors = array(), $message = '')
+    {
+        error_log(__METHOD__);
+
+        if (isset($_REQUEST['action'])) {
+            $action = $_REQUEST['action'];
+            if ($action == 'checkout') {
+                $txn_id = $_REQUEST['txn'];
+            }
+        }
+
+        // Recurring: One time domestic
+        $recurring_onetime_domestic = $_REQUEST['onetimeDomesticResult'] ?? null;
+
+        // Recurring: One time international
+        $recurring_onetime_international = $_REQUEST['onetimeInternationalResult'] ?? null;
+
+        //one-payment-return success
+        $one_click_success = $_REQUEST['oneClickSuccess'] ?? null;
+
+        //one-payment-return cancel
+        $one_click_cancel = $_REQUEST['oneClickCancel'] ?? null;
+
+        // internation-payment return
+        $international_result = isset($_REQUEST['internationalResult']) ? $_REQUEST['internationalResult'] : null;
+
+        //link card trả về (thành công + thất bại)
+        $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
+
+        if (isset($card_link_request)) {
+            $this->handle_card_link_request($txn_id);
+        }
+
+        if (isset($one_click_success)) {
+            $this->handle_one_click_success($txn_id);
+        }
+
+        if (isset($one_click_cancel)) {
+            $this->handle_one_click_cancel($txn_id);
+        }
+
+        if (isset($international_result) and $international_result == '1') {
+            $this->handle_international_return($txn_id);
+        }
+
+        if (isset($recurring_onetime_domestic) and $recurring_onetime_domestic == '1') {
+            $this->handle_recurring_onetime_domestic($txn_id);
+        }
+
+        if (isset($recurring_onetime_international) and $recurring_onetime_international == '1') {
+            $this->handle_recurring_onetime_international($txn_id);
+        }
+
+        //cancel url của thanh toán thường
+        $domestic_result = isset($_REQUEST['domesticResultUserCancel']) ? $_REQUEST['domesticResultUserCancel'] : null;
+        $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
+        $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
+        $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
+
+        //url cancel?
+        $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
+
+        if (isset($domestic_result)) {
+            error_log("user cancel");
+            $txn = new MeprTransaction($txn_id);
+            MeprUtils::send_failed_txn_notices($txn);
+            echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
+            echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+        } else if ($error_code != '000') {
+            $mepr_options = MeprOptions::fetch();
+            $sub = new MeprSubscription($sub_id);
+            $user = $sub->user();
+            $this->render_update_form($user, $sub, $mepr_options);
         } else if (!$cancel) {
-            throw new MeprGatewayException(__('Thanh toán không thành công vui lòng thử lại', 'memberpress'));
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         } else {
             error_log('before get transaction transaction code ' . $transaction_code);
             $data['tokenKey'] = $token_key;
             $data['transactionCode'] = $transaction_code;
             $this->initialize_payment_api();
+
             $result = $this->alepayAPI->getTransactionInfo($transaction_code);
-            if ($result->code != '000') {
-                $sub = new MeprSubscription($sub_id);
-                $txn = new MeprTransaction($sub->trans_num);
+
+            if (!is_object($result)) {
+                $txn = new MeprTransaction($txn_id);
                 MeprUtils::send_failed_txn_notices($txn);
-                throw new MeprGatewayException(__('Thanh toán không thành công vui lòng thử lại', 'memberpress'));
+                throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
             } else {
                 $_REQUEST['data'] = $result;
                 $transaction = $this->record_create_subscription();
-                error_log('loggggggg 0' . print_r($transaction, true));
                 if (gettype($transaction) == 'array') {
-                    error_log('loggggggg 1 trans id ' . $transaction['transaction']->id);
-                    $sub = new MeprSubscription($sub_id);
-                    $txn = new MeprTransaction($transaction['transaction']->id);
+                    $txn = new MeprTransaction($txn_id);
                     $sub = $txn->subscription();
+                    $sub->add_meta('payment_method', 'domistic');
                     $this->activate_subscription($txn, $sub);
+                    error_log('dispay update form');
                     $mepr_options = MeprOptions::fetch();
                     error_log('dispay update form');
                     $product = new MeprProduct($txn->product_id);
@@ -1772,8 +1784,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     }
                     error_log('sent query ' . print_r($query_params, true));
                     MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
-                } else {
-                    error_log('loggggggg');
                 }
             }
         }
