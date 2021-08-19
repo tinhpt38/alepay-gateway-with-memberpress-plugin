@@ -113,10 +113,32 @@ class DLHMemeberpressWebhookHandler
 
         $comming_data = $request->get_params();
 
-        $encrypted_data = $comming_data->data;
-        $checksum = $comming_data->checksum;
+        $encrypted_data = $comming_data['data'];
+        $checksum = $comming_data['checksum'];
 
         $decrypted_data = $this->alepayAPI->decryptCallbackData($encrypted_data);
+
+        if (!$decrypted_data) {
+            // TODO: Error handling
+            return [
+                'status' => 500,
+                'message' => 'Failure',
+            ];
+        }
+
+        $decrypted_data = json_decode($decrypted_data);
+
+        if ($decrypted_data->errorCode != '000' || $decrypted_data->cancel) {
+            // TODO: User reject the auto subscription
+            return [
+                'status' => 400,
+                'message' => 'User cancel the auto subscription',
+            ];
+        }
+
+        $transaction_code = $decrypted_data->data;
+
+        // TODO: Get transaction info if needed
 
         return [
             'status' => 200,
