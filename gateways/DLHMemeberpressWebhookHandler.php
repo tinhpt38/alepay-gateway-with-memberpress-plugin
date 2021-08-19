@@ -13,6 +13,7 @@ if (!defined('ABSPATH')) {
 class DLHMemeberpressWebhookHandler
 {
     private array $args;
+
     private Alepay $alepayAPI;
 
     public function __construct()
@@ -94,18 +95,12 @@ class DLHMemeberpressWebhookHandler
 
         if (is_object($result)) {
             error_log('result' . print_r($result, true));
-            if(get_option(AleConfiguration::$CONNECTED)){
+            if (!get_option(AleConfiguration::$CONNECTED)) {
                 $checkout_url = $result->checkoutUrl;
                 $message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
-                $message = str_replace(['$sub_id','$url'],[$order_code,$checkout_url], $message);
-                wp_mail($request_data->data->member->id,$message);
-            }else{
-                $token = $result->token;
-                $checkout_url = $result->checkoutUrl;
-                error_log('checkout url' . $result->checkoutUrl);
-                MeprUtils::wp_redirect($checkout_url);
+                $message = str_replace(['$sub_id', '$url'], [$order_code, $checkout_url], $message);
+                wp_mail($request_data->data->member->email, $message);
             }
-            
         } else {
             error_log('MeprGatewayException');
             throw new MeprGatewayException($result['errorDescription']);
@@ -127,7 +122,6 @@ class DLHMemeberpressWebhookHandler
         $decrypted_data = $this->alepayAPI->decryptCallbackData($encrypted_data);
 
         if (!$decrypted_data) {
-            // TODO: Error handling
             return [
                 'status' => 500,
                 'message' => 'Failure',
@@ -136,8 +130,15 @@ class DLHMemeberpressWebhookHandler
 
         $decrypted_data = json_decode($decrypted_data);
 
-        if ($decrypted_data->errorCode != '000' || $decrypted_data->cancel) {
-            // TODO: User reject the auto subscription
+        if ($decrypted_data->errorCode != '000') {
+            error_log(print_r($decrypted_data, true));
+            return [
+                'status' => 500,
+                'message' => 'Error! Try again later',
+            ];
+        }
+
+        if ($decrypted_data->cancel) {
             return [
                 'status' => 400,
                 'message' => 'User cancel the auto subscription',
@@ -146,12 +147,36 @@ class DLHMemeberpressWebhookHandler
 
         $transaction_code = $decrypted_data->data;
 
-        // TODO: Get transaction info if needed
+        $transaction_info = $this->alepayAPI->getTransactionInfo($transaction_code);
+
+        if (!$transaction_info) {
+            return [
+                'status' => 500,
+                'message' => 'Get transaction info failed',
+            ];
+        }
+
+        $subscription_id = $transaction_info->orderCode;
+        $subscription = MeprSubscription::get_one_by_subscr_id($subscription_id);
+
+        if (!$subscription) {
+            return [
+                'status' => 500,
+                'message' => 'Subscription not found',
+            ];
+        }
+        $subscription->status = MeprSubscription::$active_str;
+        $subscription->save();
+
+        // TODO: Send mail to user
+        $user_email = $transaction_info->buyerEmail;
 
         return [
             'status' => 200,
             'message' => 'Success',
-            'data' => $decrypted_data
+            'data' => $decrypted_data,
+            'transaction_info' => $transaction_info,
+            'subscription' => $subscription->rec
         ];
     }
 
@@ -164,6 +189,8 @@ class DLHMemeberpressWebhookHandler
 
         $encrypted_data = $comming_data->data;
         $checksum = $comming_data->checksum;
+
+        // TODO: Handle failure subscription
 
         return [
             'status' => 200,
