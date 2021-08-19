@@ -159,6 +159,7 @@ class Alepay {
             error_log('Connection Successful');
         }
         curl_close($ch);
+        error_log('before return result '. print_r($result,true));
         return json_decode($result);
     }
 

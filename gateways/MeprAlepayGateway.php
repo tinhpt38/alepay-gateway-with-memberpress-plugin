@@ -587,7 +587,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         }
 
         $buyer_name = trim($_REQUEST['mepr-buyer-last-name']) . ' ' . trim($_REQUEST['mepr-buyer-first-name']);
-        $data['cancelUrl'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" . '&returnUrl=1';
+        $data['cancelUrl'] = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['allowDomestic'] = true;
         $data['amount'] = doubleval($amount);
         $data['orderCode'] = $sub->subscr_id;
@@ -621,16 +621,16 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['paymentHours'] = '1';
             $data['checkoutType'] = intval(1);
             $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
-            
+
             $isCardLink = $_REQUEST['is-card-link'];
-            if(isset($isCardLink)){
-                if($payment_type == 'international'){
+            if (isset($isCardLink)) {
+                if ($payment_type == 'international') {
                     $data['isCardLink'] = true;
-                }else{
+                } else {
                     $data['isCardLink'] = false;
                 }
-            }else{
-                $data['isCardLink'] = true; 
+            } else {
+                $data['isCardLink'] = true;
                 if ($isCardLink != 'on') {
                     $data['isCardLink'] = false;
                     unset($data['merchantSideUserId']);
@@ -638,7 +638,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     unset($data['buyerState']);
                 }
             }
-            
+
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
             if (!is_object($result)) {
                 error_log('Send request order international failed');
@@ -650,13 +650,14 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             error_log(print_r($result, true));
 
             $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+            //$this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
             MeprUtils::wp_redirect($checkout_url);
         } else if ($payment_type == 'domestic') {
-
-            $data['returnUrl'] = $data['returnUrl'] . '&domesticResultUserCancel=1';
+            $data['cancelUrl'] = $data['cancelUrl'] . '&domesticResultUserCancel';
+            $data['returnUrl'] = $data['returnUrl'] . '&domesticResult=1';
+            $this->initialize_payment_api();
             $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
-
+            error_log(print_r($result, true));
             if ($result->code != '000') {
                 error_log('Send request order to alepay domestic ATM failed');
                 error_log(print_r($result, true));
@@ -667,7 +668,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             $checkout_url = $result->checkoutUrl;
             $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-
             MeprUtils::wp_redirect($checkout_url);
         } else if ($payment_type == 'one_click_payment') {
             $this->process_one_click_payment($txn);
@@ -725,8 +725,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $result = $this->alepayAPI->sendCardLinkRequest($data);
 
-        if (!$result) {
+        if (isset($result->errCode )) {
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
+            exit;
         }
 
         MeprUtils::wp_redirect($result->url);
@@ -1042,6 +1043,50 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     }
 
+    public function update_card_link_request($sub_id)
+    {
+        $this->initialize_payment_api();
+        error_log(__METHOD__);
+        $data = isset($_REQUEST['data']) ? $_REQUEST['data'] : null;
+        if (isset($data)) {
+            error_log(print_r($data, true));
+            $result = $this->alepayAPI->decryptCallbackData($data);
+            $tokenization_payment = json_decode($result, true);
+            if ($tokenization_payment['errorCode'] == '000') {
+                if ($tokenization_payment['cancel'] == true) {
+                    //Người dùng huỷ liên hết thẻ
+                    error_log('nguowif dunfg huy lien ket the');
+                } else {
+                    error_log('Nguoi dung lien ket thanh cong ' . print_r($tokenization_payment, true));
+                    //Người dùng liên kết thẻ thành công
+                    $card_link_status = $tokenization_payment['data']['data']['cardLinkStatus'];
+                    $email = $tokenization_payment['data']['email'];
+                    $customer_id = $tokenization_payment['data']['customerId'];
+                    $card_number = $tokenization_payment['data']['cardNumber'];
+                    $card_holder_name = $tokenization_payment['data']['cardHolderName'];
+                    $card_expire_month = $tokenization_payment['data']['cardExpireMonth'];
+                    $card_expire_year = $tokenization_payment['data']['cardExpireYear'];
+                    $payment_method = $tokenization_payment['data']['paymentMethod'];
+                    $bank_code = $tokenization_payment['data']['bankCode'];
+                    $token = $tokenization_payment['data']['token'];
+                    $cc_last4 = substr($card_number, strlen($card_number) - 4, 4);
+                    $sub = new MeprSubscription($sub_id);
+                    $sub->cc_last4 = $cc_last4;
+                    $sub->cc_exp_month = $card_expire_month;
+                    $sub->cc_exp_year = $card_expire_year;
+                    $sub->created_at = gmdate('c');
+                    $sub->token = $token;
+                    $sub->store();
+                    return $sub;
+                }
+            } else {
+                throw new MeprGatewayException(__('Update was unsuccessful, please check your payment details and try again.', 'memberpress'));
+            }
+        }
+        return false;
+    }
+
+
     public function record_card_link_request($txn_id)
     {
         $this->initialize_payment_api();
@@ -1247,10 +1292,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $decryptedData = json_decode($decryptedData);
 
         $alepay_transaction_code = null;
-           // Activate subscription
-           $txn = new MeprTransaction($txn_id);
+        // Activate subscription
+        $txn = new MeprTransaction($txn_id);
 
-           $sub = $txn->subscription();
+        $sub = $txn->subscription();
 
         if ($decryptedData->errorCode == '000' && !$decryptedData->cancel) {
 
@@ -1269,7 +1314,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         }
 
         if (!$alepay_transaction_code) {
-            throw new MeprGatewayException(__('Invalid transaction code', 'memberpress'));
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
 
         // Get transaction info
@@ -1285,14 +1330,14 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         // Record transaction
         $_REQUEST['data'] = $transaction_info;
+        error_log(print_r($transaction_info));
         $transaction = $this->record_create_subscription();
 
         if (!gettype($transaction) == 'array') {
             throw new MeprGatewayException(__('Error when recording new transaction.', 'memberpress'));
         }
 
-     
-        
+
         $this->activate_subscription($txn, $sub);
 
         error_log('dispay update form');
@@ -1531,7 +1576,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         }
 
         //cancel url của thanh toán thường
-        $go_back = isset($_REQUEST['returnUrl']) ? $_REQUEST['returnUrl'] : null;
+        $go_back = isset($_REQUEST['domesticResultUserCancel']) ? $_REQUEST['domesticResultUserCancel'] : null;
         $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
         $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
@@ -1628,7 +1673,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function render_update_form($user, $sub, $mepr_options)
     {
         error_log(__METHOD__);
-        $payment_method = $sub->get_meta('payment_method');
+        $payment_method = $sub->get_meta('payment_method', true);
         error_log($payment_method);
     ?>
         <div class="mp_wrapper">
@@ -1644,28 +1689,34 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <div class="mp-form-label">
 
                             <div id="card-element" class="mepr-alepay-card-element">
-                                <input type="hidden" name="mepr_process_payment_form" value="Y" />
-                                <div class="mepr_spacer">&nbsp;</div>
                                 <label class="mepr-buyer-first-name">Tên và tên đệm (*)</label>
-                                <input type=text name="mepr-buyer-first-name" required value="<?php echo $user->first_name ?>">
+                                <input type=text name="mepr-buyer-first-name" value="<?php echo $user->first_name ?>">
                                 <label class="mepr-buyer-last-name">Họ (*)</label>
-                                <input type=text name="mepr-buyer-last-name" required value="<?php echo $user->last_name ?>">
+                                <input type=text name="mepr-buyer-last-name" value="<?php echo $user->last_name ?>">
                                 <label class="mepr-buyer-email">Email (*)</label>
                                 <input type="email" name="mepr-buyer-email" value="<?php echo $user->user_email ?>">
                                 <label class="mepr-buyer-phone">Số điện thoại (*)</label>
                                 <?php $phone = get_user_meta($user->ID, 'billing_phone', true); ?>
-                                <input type="text" name="mepr-buyer-phone" required value="<?php echo $phone ?>">
+                                <input type="text" name="mepr-buyer-phone" value="<?php echo $phone ?>">
                                 <label class="mepr-buyer-address">Địa chỉ (*)</label>
                                 <?php $address = get_user_meta($user->ID, 'billing_address_1', true); ?>
-                                <input type="text" name="mepr-buyer-address" required value="<?php echo $address ?>">
+                                <input type="text" name="mepr-buyer-address" value="<?php echo $address ?>">
                                 <label class="mepr-buyer-city">Thành phố (*)</label>
                                 <?php $city = get_user_meta($user->ID, 'billing_city', true); ?>
-                                <input type="text" name="mepr-buyer-city" required value="<?php echo $city ?>">
+                                <input type="text" name="mepr-buyer-city" value="<?php echo $city ?>">
+
+                                <label class="mepr-buyer-state">Tỉnh (*)</label>
+                                <?php $state = get_user_meta($user->ID, 'billing_state', true); ?>
+                                <input type="text" name="mepr-buyer-state" value="<?php echo $state ?>">
+
+                                <label class="mepr-buyer-postal-code">Postal Code (*)</label>
+                                <?php $pcode = get_user_meta($user->ID, 'billing_post_code', true); ?>
+                                <input type="text" name="mepr-buyer-postal-code" value="<?php echo $pcode ?>">
                                 <?php $country = get_user_meta($user->ID, 'billing_country', true); ?>
                                 <label class="mepr-buyer-country">Quốc gia (*)</label>
-                                <input type="text" name="mepr-buyer-country" required value="<?php echo $country ?>">
-                                <?php  $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]" ?>
-                                <input type="hidden" name="mepr-buyer-des" value="<?php echo 'The charge form ' . $callback . 'with Subcription '. $sub->id?>">
+                                <input type="text" name="mepr-buyer-country" value="<?php echo $country ?>">
+                                <?php $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]" ?>
+                                <input type="hidden" name="mepr-buyer-des" value="<?php echo 'The charge form ' . $callback . ' with Subcription ' . $sub->id ?>">
                                 <label>(*) Các trường dữ liệu không được để trống</label>
                                 <?php MeprView::render('/shared/has_errors', get_defined_vars()); ?>
                             </div>
@@ -1703,12 +1754,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         // Recurring: One time international
         $recurring_onetime_international = $_REQUEST['onetimeInternationalResult'] ?? null;
 
-        //one-payment-return success
-        $one_click_success = $_REQUEST['oneClickSuccess'] ?? null;
-
-        //one-payment-return cancel
-        $one_click_cancel = $_REQUEST['oneClickCancel'] ?? null;
-
         // internation-payment return
         $international_result = isset($_REQUEST['internationalResult']) ? $_REQUEST['internationalResult'] : null;
 
@@ -1716,31 +1761,19 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $card_link_request = isset($_REQUEST['cardLinkRequest']) ? $_REQUEST['cardLinkRequest'] : null;
 
         if (isset($card_link_request)) {
-            $this->handle_card_link_request($txn_id);
+           $sub = $this->update_card_link_request($sub_id);
+           if(is_object($sub)){
+            $url = get_site_url().'account/?action=subscriptions';
+               MeprUtils::wp_redirect($url);
+           }
         }
 
-        if (isset($one_click_success)) {
-            $this->handle_one_click_success($txn_id);
-        }
-
-        if (isset($one_click_cancel)) {
-            $this->handle_one_click_cancel($txn_id);
-        }
-
-        if (isset($international_result) and $international_result == '1') {
+        if (isset($international_result) && $international_result == '1') {
             $this->handle_international_return($txn_id);
         }
 
-        if (isset($recurring_onetime_domestic) and $recurring_onetime_domestic == '1') {
-            $this->handle_recurring_onetime_domestic($txn_id);
-        }
-
-        if (isset($recurring_onetime_international) and $recurring_onetime_international == '1') {
-            $this->handle_recurring_onetime_international($txn_id);
-        }
-
         //cancel url của thanh toán thường
-        $domestic_result = isset($_REQUEST['domesticResultUserCancel']) ? $_REQUEST['domesticResultUserCancel'] : null;
+        $domestic_result_cancel = isset($_REQUEST['domesticResultUserCancel']) ? $_REQUEST['domesticResultUserCancel'] : null;
         $token_key = isset($_REQUEST['tokenKey']) ? $_REQUEST['tokenKey'] : null;
         $transaction_code = isset($_REQUEST['transactionCode']) ? $_REQUEST['transactionCode'] : null;
         $error_code = isset($_REQUEST['errorCode']) ? $_REQUEST['errorCode'] : null;
@@ -1748,7 +1781,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         //url cancel?
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
 
-        if (isset($domestic_result)) {
+        if (isset($domestic_result_cancel)) {
             error_log("user cancel");
             $txn = new MeprTransaction($txn_id);
             MeprUtils::send_failed_txn_notices($txn);
