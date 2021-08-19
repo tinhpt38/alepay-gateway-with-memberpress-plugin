@@ -94,10 +94,18 @@ class DLHMemeberpressWebhookHandler
 
         if (is_object($result)) {
             error_log('result' . print_r($result, true));
-            $token = $result->token;
-            $checkout_url = $result->checkoutUrl;
-            error_log('checkout url' . $result->checkoutUrl);
-            MeprUtils::wp_redirect($checkout_url);
+            if(get_option(AleConfiguration::$CONNECTED)){
+                $checkout_url = $result->checkoutUrl;
+                $message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
+                $message = str_replace(['$sub_id','$url'],[$order_code,$checkout_url], $message);
+                wp_mail($request_data->data->member->id,$message);
+            }else{
+                $token = $result->token;
+                $checkout_url = $result->checkoutUrl;
+                error_log('checkout url' . $result->checkoutUrl);
+                MeprUtils::wp_redirect($checkout_url);
+            }
+            
         } else {
             error_log('MeprGatewayException');
             throw new MeprGatewayException($result['errorDescription']);

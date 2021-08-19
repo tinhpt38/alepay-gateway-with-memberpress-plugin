@@ -11,8 +11,8 @@
  * Domain Path:       /languages
  */
 
-require_once __DIR__ . './utils/AleConfiguration.php';
-require_once __DIR__ . './gateways/DLHMemeberpressWebhookHandler.php';
+require_once __DIR__ . '/utils/AleConfiguration.php';
+require_once __DIR__ . '/gateways/DLHMemeberpressWebhookHandler.php';
 
 /**
  * Add custom AJAX for webhook
@@ -87,6 +87,7 @@ function config_render()
     $test_mode = get_option(AleConfiguration::$TEST_MODE);
     $webhook = get_option(AleConfiguration::$WEBHOOK);
     $site = get_option(AleConfiguration::$SITE_NAME);
+    $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
 
     $connected = $connected == true ? 'checked' : '';
     $test_mode = $test_mode == true ? 'checked' : '';
@@ -95,6 +96,7 @@ function config_render()
     <h2><?php echo __('Configuration AlePay Gateway', 'alepay-gateway') ?></h2>
     <div class="alp-container">
         <form name="alepay-settings" id="alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
+            <h3>General</h3>
             <div class="item">
                 <label for="alepay_encrypt_key"><strong>Encrypt</strong></label>
                 <input name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
@@ -144,6 +146,19 @@ function config_render()
                 <label for="is_test_mode"><strong>Test Mode</strong></label>
                 <input name="is_test_mode" type="checkbox" <?php echo $test_mode ?>>
             </div>
+            <hr />
+            <h3>Message</h3>
+            <div class="item">
+                <label for="checkout_message">Email comfirm checkout</label>
+                <?php 
+                if(empty($chekout_message)){
+                    $chekout_message = 'Một giao dịch từ $site cần bạn xác nhận. Mã giao giao dịch là $sub_id. Bạn vui lòng truy cập đường dẫn sau để xác nhận giao dịch $url.';
+                }
+                ?>
+                <textarea id="checkout_message" name="checkout_message" rows="4" cols="50"><?php echo $chekout_message?></textarea>
+            </div>
+            <h4>Fileds is require: $sub_id, $url</h4>
+
             <div class="item">
                 <button class="button button-primary" name="alepay-setting-submit" type="submit">Save change</button>
             </div>
