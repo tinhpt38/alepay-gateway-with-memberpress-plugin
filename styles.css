@@ -13,14 +13,14 @@
 }
 
 .alp-container .item {
-    width: 50%;
+    width: 90%;
     display: flex;
     justify-content: space-between;
     margin-top: 32px;
 }
 
 .alp-container .item input {
-    width: 50%;
+    width: 60%;
 }
 
 .alp-container .item select {

@@ -1,0 +1,59 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2021-08-19 18:34+0700\n"
+"PO-Revision-Date: 2021-08-19 18:36+0700\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: en\n"
+
+msgid "First name"
+msgstr "First name"
+
+msgid "Last name"
+msgstr "Last name"
+
+msgid "Address"
+msgstr "Address"
+
+msgid "City"
+msgstr "City"
+
+msgid "State"
+msgstr "State"
+
+msgid "Postal Code"
+msgstr "Postal Code"
+
+msgid "Country"
+msgstr "Country"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Data fields cannot be left blank"
+msgstr "Data fields cannot be left blank"
+
+msgid "Select payment type"
+msgstr "Select payment type"
+
+msgid "Domestic: ATM, IB, QRCODE"
+msgstr "Domestic: ATM, IB, QRCODE"
+
+msgid "International: VISA, MasterCard..."
+msgstr "International: VISA, MasterCard…"
+
+msgid "One Click Payment"
+msgstr "One Click Payment"
+
+msgid "I agree to link my card to the website"
+msgstr "I agree to link my card to the website"
+
+msgid "Payment with Alepay"
+msgstr "Payment with Alepay"
