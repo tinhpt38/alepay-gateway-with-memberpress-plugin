@@ -48,6 +48,8 @@ function ale_enqueue_scripts()
     wp_register_script('alepay-js-native', plugins_url('/config.js', __FILE__), array('jquery'), null, true);
     wp_localize_script('alepay-js-native', 'ajax_object', array('ajax_url' => admin_url('admin-ajax.php')));
     wp_enqueue_script('alepay-js-native');
+    wp_register_style('alepay-gateway-client-css', plugins_url('/styles.css', __FILE__));
+    wp_enqueue_style('alepay-gateway-client-css');
 }
 
 function ale_admin_enqueue_scripts()
@@ -83,6 +85,8 @@ function config_render()
     $email = get_option(AleConfiguration::$EMAIL);
     $connected = get_option(AleConfiguration::$CONNECTED);
     $test_mode = get_option(AleConfiguration::$TEST_MODE);
+    $webhook = get_option(AleConfiguration::$WEBHOOK);
+    $site = get_option(AleConfiguration::$SITE_NAME);
 
     $connected = $connected == true ? 'checked' : '';
     $test_mode = $test_mode == true ? 'checked' : '';
@@ -118,6 +122,17 @@ function config_render()
             <div class="item">
                 <label for="alepay_email"><strong>Email</strong></label>
                 <input name="alepay_email" type="text" value=<?php echo $email; ?>>
+            </div>
+
+            <div class="item">
+                <label for="alepay_site_name"><strong>Site name</strong></label>
+                <input name="alepay_site_name" type="text" value=<?php echo $site; ?>>
+            </div>
+
+
+            <div class="item">
+                <label for="alepay_webhook"><strong>Alepay Webhook URL</strong></label>
+                <input name="alepay_webhook" type="text" value=<?php echo $webhook; ?>>
             </div>
 
             <div class="item-checkbox">
