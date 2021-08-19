@@ -54,3 +54,6 @@ msgstr "One Click Payment"
 
 msgid "I agree to link my card to the website"
 msgstr "Tôi đồng ý liên kết thẻ"
+
+msgid "Payment with Alepay"
+msgstr "Thanh toán với Alepay"

@@ -20,7 +20,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         error_log(__METHOD__);
         $this->name = __("Alepay", 'alepay-gateway');
         $this->icon = plugins_url('/alepay-gateway') . '/images/alepay.png';
-        $this->desc = __('Thanh toán bằng cổng thanh toán Alepay', 'alepay-gateway');
+        $this->desc = __('Payment with Alepay', 'alepay-gateway');
         $this->key = __('Alepay', 'alepay-gateway');
         $this->set_defaults();
         $this->has_spc_form = true;
@@ -80,11 +80,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'debug' => false,
                 'test_mode' => !empty($test_mode),
                 // 'alepay_checkout_enabled' => $model->get_checkout_enabled(),
-                'churn_buster_enabled' => false,
-                'churn_buster_uuid' => '',
                 'connect_status' => !empty($connected),
-                // 'service_account_id' => $model->get_service_account_id(),
-                // 'service_account_name' => $model->get_service_account_name(),
                 'email' => $email,
                 'encrypt_key' => $encrypt_key,
                 'api_key' => $api_key,

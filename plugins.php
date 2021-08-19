@@ -141,6 +141,8 @@ function config_render()
         $url_v1 = $_POST['alepay_base_url_v1'];
         $url_live = $_POST['alepay_base_url_live'];
         $email = $_POST['alepay_email'];
+        $webhook = $_POST['alepay_webhook'];
+        $site_name = $_POST['alepay_site_name'];
 
         if (isset($_POST['alepay_connect_status'])) {
             $connected = true;
@@ -151,6 +153,18 @@ function config_render()
             $test_mode = true;
         } else {
             $test_mode = false;
+        }
+
+        if (empty(get_option(AleConfiguration::$SITE_NAME))) {
+            add_option(AleConfiguration::$SITE_NAME, $site_name);
+        } else {
+            update_option(AleConfiguration::$SITE_NAME, $site_name);
+        }
+
+        if (empty(get_option(AleConfiguration::$WEBHOOK))) {
+            add_option(AleConfiguration::$WEBHOOK, $webhook);
+        } else {
+            update_option(AleConfiguration::$WEBHOOK, $webhook);
         }
 
         if (empty(get_option(AleConfiguration::$ENCRYPT_KEY))) {
