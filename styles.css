@@ -23,6 +23,10 @@
     width: 60%;
 }
 
+.alp-container .item textarea {
+    width: 60%;
+}
+
 .alp-container .item select {
     width: 50%;
 }
