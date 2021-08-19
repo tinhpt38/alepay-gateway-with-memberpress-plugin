@@ -610,7 +610,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         set_transient('raw_data', json_encode($data), 60 * 60);
 
-        if ($payment_type == 'international') {
+        if ($payment_type == 'international' || $payment_type == 'international-none-link') {
 
             unset($data['allowDomestic']);
             unset($data['customMerchantId']);
@@ -621,17 +621,24 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $data['paymentHours'] = '1';
             $data['checkoutType'] = intval(1);
             $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
-
+            
             $isCardLink = $_REQUEST['is-card-link'];
-            $data['isCardLink'] = true;
-
-            if ($isCardLink != 'on') {
-                $data['isCardLink'] = false;
-                unset($data['merchantSideUserId']);
-                unset($data['buyerPostalCode']);
-                unset($data['buyerState']);
+            if(isset($isCardLink)){
+                if($payment_type == 'international'){
+                    $data['isCardLink'] = true;
+                }else{
+                    $data['isCardLink'] = false;
+                }
+            }else{
+                $data['isCardLink'] = true; 
+                if ($isCardLink != 'on') {
+                    $data['isCardLink'] = false;
+                    unset($data['merchantSideUserId']);
+                    unset($data['buyerPostalCode']);
+                    unset($data['buyerState']);
+                }
             }
-
+            
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
             if (!is_object($result)) {
                 error_log('Send request order international failed');
@@ -1240,20 +1247,24 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $decryptedData = json_decode($decryptedData);
 
         $alepay_transaction_code = null;
+           // Activate subscription
+           $txn = new MeprTransaction($txn_id);
+
+           $sub = $txn->subscription();
 
         if ($decryptedData->errorCode == '000' && !$decryptedData->cancel) {
 
             // Thanh toán không kèm liên kết thẻ
             if (is_string($decryptedData->data)) {
                 $alepay_transaction_code = $decryptedData->data;
+                $sub->add_meta('payment_method', 'international-none-link');
             }
-            // Thanh toán kèm liên kết thẻ
-            // TODO: Cần lấy token
-            // TODO: Custom card link đang có vấn đề
+            // Thanh toán kèm liên kết the
             else {
                 $alepay_token = $decryptedData->data->alepayToken;
                 $alepay_transaction_code = $decryptedData->data->transactionCode;
                 $card_link_code = $decryptedData->data->cardLinkCode;
+                $sub->add_meta('payment_method', 'international');
             }
         }
 
@@ -1280,10 +1291,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             throw new MeprGatewayException(__('Error when recording new transaction.', 'memberpress'));
         }
 
-        // Activate subscription
-        $txn = new MeprTransaction($txn_id);
-
-        $sub = $txn->subscription();
+     
+        
         $this->activate_subscription($txn, $sub);
 
         error_log('dispay update form');
@@ -1626,7 +1635,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             <form action="" method="post" id="mepr-alepay-payment-form" data-sub-id="<?php echo esc_attr($sub->id); ?>">
                 <input type="hidden" name="_mepr_nonce" value="<?php echo wp_create_nonce('mepr_process_update_account_form'); ?>" />
                 <input type="hidden" name="address_required" value="<?php echo $mepr_options->show_address_fields && $mepr_options->require_address_fields ? 1 : 0 ?>" />
-                <input type="hidden" name="payment_method" value="<?php echo $payment_method ?>" />
+                <input type="hidden" name="alepay_payment_type" value="<?php echo $payment_method ?>" />
                 <div class="mepr_update_account_table">
 
                     <div class="mepr-alepay-errors"></div>
