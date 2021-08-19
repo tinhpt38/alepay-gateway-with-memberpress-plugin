@@ -50,6 +50,7 @@ function ale_admin_enqueue_scripts()
 
     wp_register_style('alepay-gateway-native-css', plugins_url('/styles.css', __FILE__));
     wp_enqueue_style('alepay-gateway-native-css');
+
 }
 
 
@@ -87,45 +88,45 @@ function config_render()
     <div class="alp-container">
         <form name="alepay-settings" id="alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
             <div class="item">
-                <label for="alepay_encrypt_key">Encrypt</label>
+                <label for="alepay_encrypt_key"><strong>Encrypt</strong></label>
                 <input name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
             </div>
             <div class="item">
-                <label for="alepay_api_key">API key</label>
+                <label for="alepay_api_key"><strong>Encrypt</strong></label>
                 <input name="alepay_api_key" type="text" value=<?php echo $api_key ?>>
             </div>
             <div class="item">
-                <label for="alepay_checksum_key">Checksum key</label>
+                <label for="alepay_checksum_key"><strong>Checksum key</strong></label>
                 <input name="alepay_checksum_key" type="text" value=<?php echo $checksum_key ?>>
             </div>
             <div class="item">
-                <label for="alepay_base_url_v3">Base URL Sanbox v3</label>
+                <label for="alepay_base_url_v3"><strong>Base URL Sanbox v3</strong></label>
                 <input name="alepay_base_url_v3" type="text" value=<?php echo $base_url_v3; ?>>
             </div>
             <div class="item">
-                <label for="alepay_base_url_v1">Base URL Sanbox v1</label>
+                <label for="alepay_base_url_v1"><strong>Base URL Sanbox v1</strong></label>
                 <input name="alepay_base_url_v1" type="text" value=<?php echo $base_url_v1; ?>>
             </div>
             <div class="item">
-                <label for="alepay_base_url_live">Base URL LIVE</label>
+                <label for="alepay_base_url_live"><strong>Base URL LIVE</strong></label>
                 <input name="alepay_base_url_live" type="text" value=<?php echo $base_url_live; ?>>
             </div>
             <div class="item">
-                <label for="alepay_email">Email</label>
+                <label for="alepay_email"><strong>Email</strong></label>
                 <input name="alepay_email" type="text" value=<?php echo $email; ?>>
             </div>
 
             <div class="item-checkbox">
-                <label for="alepay_connect_status">Connect Status</label>
+                <label for="alepay_connect_status"><strong>Connect Status</strong></label>
                 <input name="alepay_connect_status" type="checkbox" <?php echo $connected ?>>
             </div>
 
             <div class="item-checkbox">
-                <label for="is_test_mode">Enable Sanbox</label>
+                <label for="is_test_mode"><strong>Test Mode</strong></label>
                 <input name="is_test_mode" type="checkbox" <?php echo $test_mode ?>>
             </div>
             <div class="item">
-                <input class="button button-primary" name="alepay-setting-submit" type="submit" value="Save change">
+                <button class="button button-primary" name="alepay-setting-submit" type="submit">Save change</button>
             </div>
         </form>
     </div>
