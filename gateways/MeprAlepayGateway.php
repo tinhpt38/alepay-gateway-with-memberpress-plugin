@@ -84,7 +84,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'encrypt_key' => $encrypt_key,
                 'api_key' => $api_key,
                 'checksum_key' => $checksum_key,
-                'callback_url' => '', 
+                'callback_url' => '',
                 'base_urls' => array(
                     'sanbox' => array(
                         'v3' => $base_url_v3,
@@ -194,7 +194,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         if ($payment_type == 'one-time-international') {
             $this->process_one_time_international($txn, $data, $usr);
-            
         } else if ($payment_type == 'one-time-domestic') {
             $this->process_one_time_domestic($txn, $data);
         } else {
@@ -456,9 +455,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         set_transient('raw_data', json_encode($data), 60 * 60);
 
         if ($payment_type == 'international' || $payment_type == 'international-none-link') {
-            $this->process_internation_payment($txn,$data,$usr,$payment_type);
+            $this->process_internation_payment($txn, $data, $usr, $payment_type);
         } else if ($payment_type == 'domestic') {
-        $this->process_domestic_payment($txn, $data);
+            $this->process_domestic_payment($txn, $data);
         } else if ($payment_type == 'one_click_payment') {
             $this->process_one_click_payment($txn);
         } else {
@@ -474,58 +473,58 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function process_one_time_domestic($txn, $data)
     {
         $data['returnUrl'] = $data['returnUrl'] . '&onetimeDomesticResult=1';
-            $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
+        $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
 
-            if ($result->code != '000') {
-                error_log('Send request order to alepay one time domestic ATM failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->message, 'memberpress'));
-            }
+        if ($result->code != '000') {
+            error_log('Send request order to alepay one time domestic ATM failed');
+            error_log(print_r($result, true));
+            throw new MeprGatewayException(__($result->message, 'memberpress'));
+        }
 
-            error_log('Send request order to alepay one time domestic ATM succeeded');
+        error_log('Send request order to alepay one time domestic ATM succeeded');
 
-            $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+        $checkout_url = $result->checkoutUrl;
+        $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
 
-            MeprUtils::wp_redirect($checkout_url);
+        MeprUtils::wp_redirect($checkout_url);
     }
 
     public function process_one_time_international($txn, $data, $usr)
     {
         unset($data['allowDomestic']);
-            unset($data['customMerchantId']);
-            unset($data['installment']);
-            $data['merchantSideUserId'] = strval($usr->ID);
-            $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
-            $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
-            $data['paymentHours'] = '1';
-            $data['checkoutType'] = intval(1);
-            $data['returnUrl'] = $data['returnUrl'] . '&onetimeInternationalResult=1';
+        unset($data['customMerchantId']);
+        unset($data['installment']);
+        $data['merchantSideUserId'] = strval($usr->ID);
+        $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+        $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
+        $data['paymentHours'] = '1';
+        $data['checkoutType'] = intval(1);
+        $data['returnUrl'] = $data['returnUrl'] . '&onetimeInternationalResult=1';
 
-            $isCardLink = $_REQUEST['is-card-link'];
-            $data['isCardLink'] = true;
+        $isCardLink = $_REQUEST['is-card-link'];
+        $data['isCardLink'] = true;
 
-            if ($isCardLink != 'on') {
-                $data['isCardLink'] = false;
-                unset($data['merchantSideUserId']);
-                unset($data['buyerPostalCode']);
-                unset($data['buyerState']);
-            }
+        if ($isCardLink != 'on') {
+            $data['isCardLink'] = false;
+            unset($data['merchantSideUserId']);
+            unset($data['buyerPostalCode']);
+            unset($data['buyerState']);
+        }
 
-            $result = $this->alepayAPI->sendRequestOrderInternational($data);
-            if (!is_object($result)) {
-                error_log('Send request order one time international failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
-            }
-
-            error_log('Send request order one time international succeeded');
+        $result = $this->alepayAPI->sendRequestOrderInternational($data);
+        if (!is_object($result)) {
+            error_log('Send request order one time international failed');
             error_log(print_r($result, true));
+            throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
+        }
 
-            $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+        error_log('Send request order one time international succeeded');
+        error_log(print_r($result, true));
 
-            MeprUtils::wp_redirect($checkout_url);
+        $checkout_url = $result->checkoutUrl;
+        $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+
+        MeprUtils::wp_redirect($checkout_url);
     }
 
     public function process_internation_payment($txn, $data, $usr, $payment_type)
@@ -690,6 +689,117 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function process_update_subscription($sub_id)
     {
         // This is handled via Ajax
+        $sub = new MeprSubscription($sub_id);
+        error_log(print_r($sub, true));
+
+        $userID = $sub->user_id;
+
+        $this->initialize_payment_api();
+
+        update_user_meta($userID, 'first_name', trim($_REQUEST['mepr-buyer-first-name']));
+        update_user_meta($userID, 'last_name', trim($_REQUEST['mepr-buyer-last-name']));
+        update_user_meta($userID, 'billing_address_1', trim($_REQUEST['mepr-buyer-address']));
+        update_user_meta($userID, 'billing_phone', trim($_REQUEST['mepr-buyer-phone']));
+        update_user_meta($userID, 'billing_city', trim($_REQUEST['mepr-buyer-city']));
+        update_user_meta($userID, 'billing_country', trim($_REQUEST['mepr-buyer-country']));
+        update_user_meta($userID, 'billing_state', trim($_REQUEST['mepr-buyer-state']));
+        update_user_meta($userID, 'billing_post_code', trim($_REQUEST['mepr-buyer-postal-code']));
+
+        $des = isset($_REQUEST['mepr-buyer-des']) ? $_REQUEST['mepr-buyer-des'] : null;
+        if (!$des) {
+            $des = __('The order create by Buddy Press for product ' . $sub->subscr_id);
+        }
+
+        $buyer_name = trim($_REQUEST['mepr-buyer-last-name']) . ' ' . trim($_REQUEST['mepr-buyer-first-name']);
+        $data['cancelUrl'] = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $data['allowDomestic'] = true;
+        $data['orderCode'] = $sub->subscr_id;
+        $data['customMerchantId'] = strval($userID);
+        $data['currency'] = 'VND';
+        $data['orderDescription'] = $des;
+        $data['totalItem'] = intval(1);
+        $data['checkoutType'] = intval(4);
+        $data['buyerName'] = $buyer_name;
+        $data['buyerEmail'] = trim($_REQUEST['mepr-buyer-email']);
+        $data['buyerPhone'] = trim($_REQUEST['mepr-buyer-phone']);
+        $data['buyerAddress'] = trim($_REQUEST['mepr-buyer-address']);
+        $data['buyerCity'] = trim($_REQUEST['mepr-buyer-city']);
+        $data['buyerCountry'] = trim($_REQUEST['mepr-buyer-country']);
+        $data['installment'] = false;
+        $data['returnUrl'] = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $payment_type = $_REQUEST['alepay_payment_type'];
+        set_transient('raw_data', json_encode($data), 60 * 60);
+
+        if ($payment_type == 'international' || $payment_type == 'international-none-link') {
+            unset($data['allowDomestic']);
+            unset($data['customMerchantId']);
+            unset($data['installment']);
+            $data['merchantSideUserId'] = strval($userID);
+            $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+            $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
+            $data['paymentHours'] = '1';
+            $data['checkoutType'] = intval(1);
+            $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
+
+            $isCardLink = $_REQUEST['is-card-link'];
+            if (isset($isCardLink)) {
+                if ($payment_type == 'international') {
+                    $data['isCardLink'] = true;
+                } else {
+                    $data['isCardLink'] = false;
+                }
+            } else {
+                $data['isCardLink'] = true;
+                if ($isCardLink != 'on') {
+                    $data['isCardLink'] = false;
+                    unset($data['merchantSideUserId']);
+                    unset($data['buyerPostalCode']);
+                    unset($data['buyerState']);
+                }
+            }
+
+            $result = $this->alepayAPI->sendRequestOrderInternational($data);
+            if (!is_object($result)) {
+                error_log('Send request order international failed');
+                error_log(print_r($result, true));
+                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
+            };
+
+            $checkout_url = $result->checkoutUrl;
+            MeprUtils::wp_redirect($checkout_url);
+        } else if ($payment_type == 'domestic') {
+            // $this->process_domestic_payment($txn, $data);/
+        } else if ($payment_type == 'one_click_payment') {
+            $this->process_update_onclickpayment($userID);
+        } else {
+            throw new MeprGatewayException(__('Invalid payment type', 'memberpress'));
+        }
+      
+    }
+
+    public function process_update_onclickpayment($userID){
+        $data['id'] = $userID;
+        $data['firstName'] = trim($_REQUEST['mepr-buyer-first-name']);
+        $data['lastName'] = trim($_REQUEST['mepr-buyer-last-name']);
+        $data['street'] = trim($_REQUEST['mepr-buyer-address']);
+        $data['city'] = trim($_REQUEST['mepr-buyer-city']);
+        $data['state'] = trim($_REQUEST['mepr-buyer-state']);
+        $data['postalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+        $data['country'] = trim($_REQUEST['mepr-buyer-country']);
+        $data['email'] = trim($_REQUEST['mepr-buyer-email']);
+        $data['phoneNumber'] = trim($_REQUEST['mepr-buyer-phone']);
+
+        $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $data['callback'] = $callback . '&cardLinkRequest=1';
+        $this->initialize_payment_api();
+        $result = $this->alepayAPI->sendCardLinkRequest($data);
+
+        if (isset($result->errCode)) {
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
+            exit;
+        }
+
+        MeprUtils::wp_redirect($result->url);
     }
 
     /** This method should be used by the class to record a successful cancellation
@@ -1110,11 +1220,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         $sub->add_meta('payment_method', 'one_click_payment');
                         $this->activate_subscription($txn, $sub);
 
-                        error_log('dispay update form');
+                        error_log('dispay thank you form');
 
                         $mepr_options = MeprOptions::fetch();
 
-                        error_log('dispay update form');
 
                         $product = new MeprProduct($txn->product_id);
                         $sanitized_title = sanitize_title($product->post_title);
@@ -1314,8 +1423,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
     }
 
-    public function handle_domestic($token_key, $transaction_code, $txn_id){
-        
+    public function handle_domestic($token_key, $transaction_code, $txn_id)
+    {
+
         $data['tokenKey'] = $token_key;
         $data['transactionCode'] = $transaction_code;
         $this->initialize_payment_api();
@@ -1526,7 +1636,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         } else {
             error_log('before get transaction transaction code ' . $transaction_code);
             $this->handle_domestic($token_key, $transaction_code, $txn_id);
-            
         }
     }
 
@@ -1541,11 +1650,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Displays the form for the given payment gateway on the MemberPress Options page */
     public function display_options_form()
     {
-        $url = admin_url().'&page=alepay-setting';
-        ?>
+        $url = admin_url() . '&page=alepay-setting';
+    ?>
         <a href="<?php echo $url; ?>"> <strong> Configuration </strong></a>
 
-        <?php
+    <?php
     }
 
     /** Validates the form for the given payment gateway on the MemberPress Options page */
@@ -1559,7 +1668,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function enqueue_user_account_scripts()
     {
-       //nothing in here
+        //nothing in here
     }
 
 
@@ -1611,7 +1720,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                                 <label class="mepr-buyer-des"><?php echo __('Description', 'alepay-gateway') . ' (*)' ?></label>
                                 <input type="text" name="mepr-buyer-des">
                                 <label><?php echo '(*) ' . __('Data fields cannot be left blank', 'alepay-gateway') ?></label>
-                                <span><?php echo __('Select payment type', 'alepay-gateway') ?></span>
                                 <?php MeprView::render('/shared/has_errors', get_defined_vars()); ?>
                             </div>
                         </div>
@@ -1745,8 +1853,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $txn->subscription_id = $sub_id;
         $txn->user_id = $user->ID;
         error_log(print_r($txn, true));
-        $this->process_create_subscription($txn);
-        //$this->process_update_subscription($sub_id);
+        // $this->process_create_subscription($txn);
+        $this->process_update_subscription($sub_id);
     }
 
     /** Returns boolean ... whether or not we should be sending in test mode or not */
@@ -1760,36 +1868,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     {
         return (isset($this->settings->force_ssl) and ($this->settings->force_ssl == 'on' or $this->settings->force_ssl == true));
     }
-
-    /** Get the renewal base date for a given subscription. This is the date MemberPress will use to calculate expiration dates.
-     * Of course this method is meant to be overridden when a gateway requires it.
-     */
-    public function get_renewal_base_date(MeprSubscription $sub)
-    {
-        global $wpdb;
-        $mepr_db = MeprDb::fetch();
-
-        $q = $wpdb->prepare(
-            "
-        SELECT e.created_at
-          FROM {$mepr_db->events} AS e
-         WHERE e.event='subscription-resumed'
-           AND e.evt_id_type='subscriptions'
-           AND e.evt_id=%d
-         ORDER BY e.created_at DESC
-         LIMIT 1
-      ",
-            $sub->id
-        );
-
-        $renewal_base_date = $wpdb->get_var($q);
-        if (!empty($renewal_base_date)) {
-            return $renewal_base_date;
-        }
-
-        return $sub->created_at;
-    }
-
 
     public function initialize_payment_api()
     {
