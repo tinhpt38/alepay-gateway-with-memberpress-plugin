@@ -169,15 +169,18 @@ class AlepayWebhookHandler
         $subscription->status = MeprSubscription::$active_str;
         $subscription->save();
 
-        // TODO: Send mail to user
-        $user_email = $transaction_info->buyerEmail;
+        // TODO: Get transaction and call `send_transaction_receipt_notices` to send email
+        $latest_transaction = $subscription->latest_txn();
+
+        MeprUtils::send_resumed_sub_notices($subscription);
 
         return [
             'status' => 200,
             'message' => 'Success',
             'data' => $decrypted_data,
             'transaction_info' => $transaction_info,
-            'subscription' => $subscription->rec
+            'subscription' => $subscription->rec,
+            'transaction' => $latest_transaction->rec
         ];
     }
 
@@ -188,10 +191,26 @@ class AlepayWebhookHandler
 
         $comming_data = $request->get_params();
 
-        $encrypted_data = $comming_data->data;
-        $checksum = $comming_data->checksum;
+        $encrypted_data = $comming_data['data'];
+        $checksum = $comming_data['checksum'];
 
-        // TODO: Handle failure subscription
+        // TODO: Error handling
+        $decrypted_data = $this->alepayAPI->decryptCallbackData($encrypted_data);
+
+        if (!$decrypted_data) {
+            return [
+                'status' => 500,
+                'message' => 'Failure',
+            ];
+        }
+
+        $decrypted_data = json_decode($decrypted_data);
+
+        $transaction_code = $decrypted_data->data;
+
+        $transacion = MeprTransaction::get_one($transaction_code);
+
+        MeprUtils::send_failed_txn_notices($transacion);
 
         return [
             'status' => 200,
