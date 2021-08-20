@@ -2,9 +2,7 @@
 
 define('DS', str_replace('\\', '/', DIRECTORY_SEPARATOR));
 define('ROOT_PATH', dirname(__FILE__));
-// include(ROOT_PATH . DS . 'Utils/AlepayUtils.php');
 include(ROOT_PATH . DS . './Utils/AlepayUtils.php');
-error_log('ROOT_PATH '. ROOT_PATH);
 /*
  * Alepay class
  * Implement with Alepay service
@@ -90,9 +88,7 @@ class Alepay {
             $this->env = 'live';
         }
 
-        error_log('before init alepay utility');
         $this->alepayUtils = new \AlepayUtils();
-        error_log('after init alepay utility');
     }
 
     public function getCustomerInfo($data){

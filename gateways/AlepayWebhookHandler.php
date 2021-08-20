@@ -36,7 +36,7 @@ class AlepayWebhookHandler
         $this->alepayAPI = new Alepay($this->args);
         
         add_action('rest_api_init', function () {
-            $route = get_option(AleConfiguration::$SITE_NAME) ;
+            $route = get_option(AleConfiguration::$NAME_SPACE) ;
             register_rest_route($route, '/alepay-whk', array(
                 'methods' => 'POST',
                 'callback' => [$this, 'handle_memeberpress_webhook']
