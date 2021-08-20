@@ -1313,6 +1313,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $alepay_transaction_code = $decryptedData->data->transactionCode;
                 $card_link_code = $decryptedData->data->cardLinkCode;
                 $sub->add_meta('payment_method', 'international');
+                
+                $sub->token = $alepay_token;
             }
         }
 
