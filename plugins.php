@@ -172,7 +172,6 @@ function config_render()
         $url_v1 = $_POST['alepay_base_url_v1'];
         $url_live = $_POST['alepay_base_url_live'];
         $email = $_POST['alepay_email'];
-        $webhook = $_POST['alepay_webhook'];
         $namespace = $_POST['alepay_name_space'];
 
         $securi_key = array(

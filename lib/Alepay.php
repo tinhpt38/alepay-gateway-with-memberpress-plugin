@@ -2,7 +2,6 @@
 
 define('DS', str_replace('\\', '/', DIRECTORY_SEPARATOR));
 define('ROOT_PATH', dirname(__FILE__));
-// include(ROOT_PATH . DS . 'Utils/AlepayUtils.php');
 include(ROOT_PATH . DS . './Utils/AlepayUtils.php');
 /*
  * Alepay class
