@@ -168,8 +168,9 @@ class DLHMemeberpressWebhookHandler
         $subscription->status = MeprSubscription::$active_str;
         $subscription->save();
 
-        // TODO: Send mail to user
-        $user_email = $transaction_info->buyerEmail;
+        // TODO: Get transaction and call `send_transaction_receipt_notices` to send email
+
+        MeprUtils::send_resumed_sub_notices($subscription);
 
         return [
             'status' => 200,
@@ -190,7 +191,7 @@ class DLHMemeberpressWebhookHandler
         $encrypted_data = $comming_data->data;
         $checksum = $comming_data->checksum;
 
-        // TODO: Handle failure subscription
+        // TODO: Error handling
 
         return [
             'status' => 200,
