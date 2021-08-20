@@ -38,8 +38,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             'subscription-trial-payment'
         );
         $this->notifiers = array(
-            'cancel' => 'cancel_handler',
-            'return' => 'return_handler'
+            'whk' => 'webhook_listener',
         );
         $this->message_pages = array('cancel' => 'cancel_message', 'payment_failed' => 'payment_failed_message');
     }
@@ -85,7 +84,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'encrypt_key' => $encrypt_key,
                 'api_key' => $api_key,
                 'checksum_key' => $checksum_key,
-                'callback_url' => '',
+                'callback_url' => '', 
                 'base_urls' => array(
                     'sanbox' => array(
                         'v3' => $base_url_v3,
@@ -194,58 +193,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         set_transient('raw_data', json_encode($data), 60 * 60);
 
         if ($payment_type == 'one-time-international') {
-
-            unset($data['allowDomestic']);
-            unset($data['customMerchantId']);
-            unset($data['installment']);
-            $data['merchantSideUserId'] = strval($usr->ID);
-            $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
-            $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
-            $data['paymentHours'] = '1';
-            $data['checkoutType'] = intval(1);
-            $data['returnUrl'] = $data['returnUrl'] . '&onetimeInternationalResult=1';
-
-            $isCardLink = $_REQUEST['is-card-link'];
-            $data['isCardLink'] = true;
-
-            if ($isCardLink != 'on') {
-                $data['isCardLink'] = false;
-                unset($data['merchantSideUserId']);
-                unset($data['buyerPostalCode']);
-                unset($data['buyerState']);
-            }
-
-            $result = $this->alepayAPI->sendRequestOrderInternational($data);
-            if (!is_object($result)) {
-                error_log('Send request order one time international failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
-            }
-
-            error_log('Send request order one time international succeeded');
-            error_log(print_r($result, true));
-
-            $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-
-            MeprUtils::wp_redirect($checkout_url);
+            $this->process_one_time_international($txn, $data, $usr);
+            
         } else if ($payment_type == 'one-time-domestic') {
-
-            $data['returnUrl'] = $data['returnUrl'] . '&onetimeDomesticResult=1';
-            $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
-
-            if ($result->code != '000') {
-                error_log('Send request order to alepay one time domestic ATM failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->message, 'memberpress'));
-            }
-
-            error_log('Send request order to alepay one time domestic ATM succeeded');
-
-            $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-
-            MeprUtils::wp_redirect($checkout_url);
+            $this->process_one_time_domestic($txn, $data);
         } else {
             throw new MeprGatewayException(__('Invalid payment type', 'memberpress'));
         }
@@ -283,79 +234,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function record_payment_failure()
     {
         error_log('record_payment_failure');
-
-        // if (isset($_REQUEST['data'])) {
-        //     $charge = (object)$_REQUEST['data'];
-        //     $txn_res = MeprTransaction::get_one_by_trans_num($charge->id);
-
-        //     if (is_object($txn_res) and isset($txn_res->id)) {
-        //         $txn = new MeprTransaction($txn_res->id);
-        //         $txn->status = MeprTransaction::$failed_str;
-        //         $txn->store();
-        //     } else {
-        //         // Fetch expanded charge data from Alepay
-        //         $args = [
-        //             'expand' => [
-        //                 'invoice'
-        //             ]
-        //         ];
-
-        //         // $charge = (object) $this->send_stripe_request("charges/{$charge->id}", $args, 'get');
-        //         $charge = new stdClass();
-
-        //         $sub = isset($charge->invoice['subscription']) ? MeprSubscription::get_one_by_subscr_id($charge->invoice['subscription']) : null;
-
-        //         if (!($sub instanceof MeprSubscription)) {
-        //             // Look for an old cus_xxx subscription
-        //             $sub = isset($charge->customer) ? MeprSubscription::get_one_by_subscr_id($charge->customer) : null;
-        //         }
-
-        //         if ($sub instanceof MeprSubscription) {
-        //             $first_txn = $sub->first_txn();
-
-        //             if ($first_txn == false || !($first_txn instanceof MeprTransaction)) {
-        //                 $coupon_id = $sub->coupon_id;
-        //             } else {
-        //                 $coupon_id = $first_txn->coupon_id;
-        //             }
-
-        //             $txn = new MeprTransaction();
-        //             $txn->user_id = $sub->user_id;
-        //             $txn->product_id = $sub->product_id;
-        //             $txn->coupon_id = $coupon_id;
-        //             $txn->txn_type = MeprTransaction::$payment_str;
-        //             $txn->status = MeprTransaction::$failed_str;
-        //             $txn->subscription_id = $sub->id;
-        //             $txn->trans_num = $charge->id;
-        //             $txn->gateway = $this->id;
-
-        //             // if(self::is_zero_decimal_currency()) {
-        //             //   $txn->set_gross((float)$charge->amount);
-        //             // }
-        //             // else {
-        //             //   $txn->set_gross((float)$charge->amount / 100);
-        //             // }
-        //             $txn->set_gross((float)$charge->amount / 100);
-        //             $txn->store();
-
-        //             //If first payment fails, Alepay will not set up the subscription, so we need to mark it as cancelled in MP
-        //             if ($sub->txn_count == 0 && !($sub->trial && $sub->trial_amount == 0.00)) {
-        //                 $sub->status = MeprSubscription::$cancelled_str;
-        //             }
-
-        //             $sub->gateway = $this->id;
-        //             $sub->expire_txns(); //Expire associated transactions for the old subscription
-        //             $sub->store();
-        //         } else {
-        //             return false; // Nothing we can do here ... so we outta here
-        //         }
-        //     }
-
-        //     MeprUtils::send_failed_txn_notices($txn);
-
-        // return $txn;
-        // }
-
         return false;
     }
 
@@ -427,11 +305,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function process_refund(MeprTransaction $txn)
     {
         error_log(__METHOD__);
-        // $args = MeprHooks::apply_filters('mepr_alepay_refund_args', array(), $txn);
-        // // $refund = (object)$this->send_stripe_request( "charges/{$txn->trans_num}/refund", $args );
-        // $refund = new stdClass();
-        // $this->email_status("Alepay Refund: " . MeprUtils::object_to_string($refund), $this->settings->debug);
-        // $_REQUEST['data'] = $refund;
         return $this->record_refund();
     }
 
@@ -441,27 +314,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function record_refund()
     {
         error_log(__METHOD__);
-        // if (isset($_REQUEST['data'])) {
-        //     $charge = (object)$_REQUEST['data'];
-        //     $obj = MeprTransaction::get_one_by_trans_num($charge->id);
-
-        //     if (!is_null($obj) && (int)$obj->id > 0) {
-        //         $txn = new MeprTransaction($obj->id);
-
-        //         // Seriously ... if txn was already refunded what are we doing here?
-        //         if ($txn->status == MeprTransaction::$refunded_str) {
-        //             return $txn->id;
-        //         }
-
-        //         $txn->status = MeprTransaction::$refunded_str;
-        //         $txn->store();
-
-        //         MeprUtils::send_refunded_txn_notices($txn);
-
-        //         return $txn->id;
-        //     }
-        // }
-
         return false;
     }
 
@@ -565,15 +417,15 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $sub->store();
         }
 
-        $tmp_txn = new MeprTransaction();
-        $tmp_txn->product_id = $prd->ID;
-        $tmp_txn->user_id = $usr->ID;
+        // $tmp_txn = new MeprTransaction();
+        // $tmp_txn->product_id = $prd->ID;
+        // $tmp_txn->user_id = $usr->ID;
 
-        if ($sub->trial) {
-            $tmp_txn->set_subtotal($sub->trial_amount);
-        } else {
-            $tmp_txn->set_subtotal($sub->total);
-        }
+        // if ($sub->trial) {
+        //     $tmp_txn->set_subtotal($sub->trial_amount);
+        // } else {
+        //     $tmp_txn->set_subtotal($sub->total);
+        // }
 
         $amount = $sub->trial ? $sub->trial_amount : $sub->total;
 
@@ -599,72 +451,14 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['buyerCity'] = trim($_REQUEST['mepr-buyer-city']);
         $data['buyerCountry'] = trim($_REQUEST['mepr-buyer-country']);
         $data['installment'] = false;
-
         $data['returnUrl'] = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-
         $payment_type = $_REQUEST['alepay_payment_type'];
-
         set_transient('raw_data', json_encode($data), 60 * 60);
 
         if ($payment_type == 'international' || $payment_type == 'international-none-link') {
-
-            unset($data['allowDomestic']);
-            unset($data['customMerchantId']);
-            unset($data['installment']);
-            $data['merchantSideUserId'] = strval($usr->ID);
-            $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
-            $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
-            $data['paymentHours'] = '1';
-            $data['checkoutType'] = intval(1);
-            $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
-
-            $isCardLink = $_REQUEST['is-card-link'];
-            if (isset($isCardLink)) {
-                if ($payment_type == 'international') {
-                    $data['isCardLink'] = true;
-                } else {
-                    $data['isCardLink'] = false;
-                }
-            } else {
-                $data['isCardLink'] = true;
-                if ($isCardLink != 'on') {
-                    $data['isCardLink'] = false;
-                    unset($data['merchantSideUserId']);
-                    unset($data['buyerPostalCode']);
-                    unset($data['buyerState']);
-                }
-            }
-
-            $result = $this->alepayAPI->sendRequestOrderInternational($data);
-            if (!is_object($result)) {
-                error_log('Send request order international failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
-            }
-
-            error_log('Send request order international succeeded');
-            error_log(print_r($result, true));
-
-            $checkout_url = $result->checkoutUrl;
-            //$this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-            MeprUtils::wp_redirect($checkout_url);
+            $this->process_internation_payment($txn,$data,$usr,$payment_type);
         } else if ($payment_type == 'domestic') {
-            $data['cancelUrl'] = $data['cancelUrl'] . '&domesticResultUserCancel';
-            $data['returnUrl'] = $data['returnUrl'] . '&domesticResult=1';
-            $this->initialize_payment_api();
-            $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
-            error_log(print_r($result, true));
-            if ($result->code != '000') {
-                error_log('Send request order to alepay domestic ATM failed');
-                error_log(print_r($result, true));
-                throw new MeprGatewayException(__($result->message, 'memberpress'));
-            }
-
-            error_log('Send request order to alepay domestic ATM succeeded');
-
-            $checkout_url = $result->checkoutUrl;
-            $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
-            MeprUtils::wp_redirect($checkout_url);
+        $this->process_domestic_payment($txn, $data);
         } else if ($payment_type == 'one_click_payment') {
             $this->process_one_click_payment($txn);
         } else {
@@ -677,22 +471,126 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
     }
 
-    public function process_one_time_domestic()
+    public function process_one_time_domestic($txn, $data)
     {
-        wp_die('One time domestic');
+        $data['returnUrl'] = $data['returnUrl'] . '&onetimeDomesticResult=1';
+            $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
+
+            if ($result->code != '000') {
+                error_log('Send request order to alepay one time domestic ATM failed');
+                error_log(print_r($result, true));
+                throw new MeprGatewayException(__($result->message, 'memberpress'));
+            }
+
+            error_log('Send request order to alepay one time domestic ATM succeeded');
+
+            $checkout_url = $result->checkoutUrl;
+            $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+
+            MeprUtils::wp_redirect($checkout_url);
     }
 
-    public function process_one_time_international()
+    public function process_one_time_international($txn, $data, $usr)
     {
-        wp_die('One time international');
+        unset($data['allowDomestic']);
+            unset($data['customMerchantId']);
+            unset($data['installment']);
+            $data['merchantSideUserId'] = strval($usr->ID);
+            $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+            $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
+            $data['paymentHours'] = '1';
+            $data['checkoutType'] = intval(1);
+            $data['returnUrl'] = $data['returnUrl'] . '&onetimeInternationalResult=1';
+
+            $isCardLink = $_REQUEST['is-card-link'];
+            $data['isCardLink'] = true;
+
+            if ($isCardLink != 'on') {
+                $data['isCardLink'] = false;
+                unset($data['merchantSideUserId']);
+                unset($data['buyerPostalCode']);
+                unset($data['buyerState']);
+            }
+
+            $result = $this->alepayAPI->sendRequestOrderInternational($data);
+            if (!is_object($result)) {
+                error_log('Send request order one time international failed');
+                error_log(print_r($result, true));
+                throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
+            }
+
+            error_log('Send request order one time international succeeded');
+            error_log(print_r($result, true));
+
+            $checkout_url = $result->checkoutUrl;
+            $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+
+            MeprUtils::wp_redirect($checkout_url);
     }
 
-    public function process_internation_payment($txn)
+    public function process_internation_payment($txn, $data, $usr, $payment_type)
     {
+
+        unset($data['allowDomestic']);
+        unset($data['customMerchantId']);
+        unset($data['installment']);
+        $data['merchantSideUserId'] = strval($usr->ID);
+        $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
+        $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
+        $data['paymentHours'] = '1';
+        $data['checkoutType'] = intval(1);
+        $data['returnUrl'] = $data['returnUrl'] . '&internationalResult=1';
+
+        $isCardLink = $_REQUEST['is-card-link'];
+        if (isset($isCardLink)) {
+            if ($payment_type == 'international') {
+                $data['isCardLink'] = true;
+            } else {
+                $data['isCardLink'] = false;
+            }
+        } else {
+            $data['isCardLink'] = true;
+            if ($isCardLink != 'on') {
+                $data['isCardLink'] = false;
+                unset($data['merchantSideUserId']);
+                unset($data['buyerPostalCode']);
+                unset($data['buyerState']);
+            }
+        }
+
+        $result = $this->alepayAPI->sendRequestOrderInternational($data);
+        if (!is_object($result)) {
+            error_log('Send request order international failed');
+            error_log(print_r($result, true));
+            throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
+        }
+
+        error_log('Send request order international succeeded');
+        error_log(print_r($result, true));
+
+        $checkout_url = $result->checkoutUrl;
+        $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+        MeprUtils::wp_redirect($checkout_url);
     }
 
-    public function process_domestic_payment($txn)
+    public function process_domestic_payment($txn, $data)
     {
+        $data['cancelUrl'] = $data['cancelUrl'] . '&domesticResultUserCancel';
+        $data['returnUrl'] = $data['returnUrl'] . '&domesticResult=1';
+        $this->initialize_payment_api();
+        $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
+        error_log(print_r($result, true));
+        if ($result->code != '000') {
+            error_log('Send request order to alepay domestic ATM failed');
+            error_log(print_r($result, true));
+            throw new MeprGatewayException(__($result->message, 'memberpress'));
+        }
+
+        error_log('Send request order to alepay domestic ATM succeeded');
+
+        $checkout_url = $result->checkoutUrl;
+        $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
+        MeprUtils::wp_redirect($checkout_url);
     }
 
     public function process_one_click_payment($txn)
@@ -1404,7 +1302,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $transaction->store();
 
         // Send email
-
+        MeprUtils::send_transaction_receipt_notices($transaction);
         // Redirect to thank you page
         $mepr_options = MeprOptions::fetch();
 
@@ -1414,6 +1312,42 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $query_params = array('membership' => $sanitized_title, 'trans_num' => $transaction->trans_num, 'membership_id' => $product->ID);
 
         MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
+    }
+
+    public function handle_domestic($token_key, $transaction_code, $txn_id){
+        
+        $data['tokenKey'] = $token_key;
+        $data['transactionCode'] = $transaction_code;
+        $this->initialize_payment_api();
+
+        $result = $this->alepayAPI->getTransactionInfo($transaction_code);
+
+        if (!is_object($result)) {
+            $txn = new MeprTransaction($txn_id);
+            MeprUtils::send_failed_txn_notices($txn);
+            throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
+        } else {
+            $_REQUEST['data'] = $result;
+            $transaction = $this->record_create_subscription();
+            if (gettype($transaction) == 'array') {
+                $txn = new MeprTransaction($txn_id);
+                $sub = $txn->subscription();
+                $this->activate_subscription($txn, $sub);
+                error_log('dispay update form');
+                $mepr_options = MeprOptions::fetch();
+                error_log('dispay update form');
+                $product = new MeprProduct($txn->product_id);
+                $sanitized_title = sanitize_title($product->post_title);
+
+                $query_params = array('membership' => $sanitized_title, 'trans_num' => $txn->trans_num, 'membership_id' => $product->ID);
+                if ($txn->subscription_id > 0) {
+                    $sub = $txn->subscription();
+                    $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
+                }
+                error_log('sent query ' . print_r($query_params, true));
+                MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
+            }
+        }
     }
 
     public function render_payment_form($amount, $user, $product_id, $txn_id)
@@ -1591,38 +1525,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         } else {
             error_log('before get transaction transaction code ' . $transaction_code);
-            $data['tokenKey'] = $token_key;
-            $data['transactionCode'] = $transaction_code;
-            $this->initialize_payment_api();
-
-            $result = $this->alepayAPI->getTransactionInfo($transaction_code);
-
-            if (!is_object($result)) {
-                $txn = new MeprTransaction($txn_id);
-                MeprUtils::send_failed_txn_notices($txn);
-                throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
-            } else {
-                $_REQUEST['data'] = $result;
-                $transaction = $this->record_create_subscription();
-                if (gettype($transaction) == 'array') {
-                    $txn = new MeprTransaction($txn_id);
-                    $sub = $txn->subscription();
-                    $this->activate_subscription($txn, $sub);
-                    error_log('dispay update form');
-                    $mepr_options = MeprOptions::fetch();
-                    error_log('dispay update form');
-                    $product = new MeprProduct($txn->product_id);
-                    $sanitized_title = sanitize_title($product->post_title);
-
-                    $query_params = array('membership' => $sanitized_title, 'trans_num' => $txn->trans_num, 'membership_id' => $product->ID);
-                    if ($txn->subscription_id > 0) {
-                        $sub = $txn->subscription();
-                        $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
-                    }
-                    error_log('sent query ' . print_r($query_params, true));
-                    MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
-                }
-            }
+            $this->handle_domestic($token_key, $transaction_code, $txn_id);
+            
         }
     }
 
