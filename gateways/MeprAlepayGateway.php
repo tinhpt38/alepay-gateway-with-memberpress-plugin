@@ -1750,12 +1750,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             }
         }
 
-        // Recurring: One time domestic
-        $recurring_onetime_domestic = $_REQUEST['onetimeDomesticResult'] ?? null;
-
-        // Recurring: One time international
-        $recurring_onetime_international = $_REQUEST['onetimeInternationalResult'] ?? null;
-
         // internation-payment return
         $international_result = isset($_REQUEST['internationalResult']) ? $_REQUEST['internationalResult'] : null;
 
