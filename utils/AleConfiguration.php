@@ -11,7 +11,6 @@ class AleConfiguration
     public static string $EMAIL = 'udoo_ale_email';
     public static string $CONNECTED = 'udoo_ale_connected';
     public static string $TEST_MODE = 'udoo_ale_is_test_mode ';
-    public static string $SITE_NAME = 'udoo_ale_site_name';
-    public static string $WEBHOOK = 'udoo_ale_webhook';
+    public static string $NAME_SPACE = 'udoo_ale_name_space';
     public static string $CHECKOUT_MESSAGE = 'udoo_ale_checkout_message';
 }

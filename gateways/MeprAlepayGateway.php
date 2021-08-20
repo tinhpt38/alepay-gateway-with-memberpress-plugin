@@ -56,9 +56,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->settings = array();
         }
 
-        $encrypt_key = get_option(AleConfiguration::$ENCRYPT_KEY);
-        $api_key = get_option(AleConfiguration::$API_KEY);
-        $checksum_key = get_option(AleConfiguration::$CHECKSUM_KEY);
+        $securi_key = json_decode(UDOO_ALEPAY);
+        $encrypt_key = $securi_key->encrypt_key;
+        $api_key = $securi_key->api_key;
+        $checksum_key = $securi_key->checksum_key;
+
         $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
         $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
         $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);

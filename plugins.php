@@ -13,6 +13,7 @@
 
 require_once __DIR__ . '/utils/AleConfiguration.php';
 require_once __DIR__ . '/gateways/AlepayWebhookHandler.php';
+require_once __DIR__ . '/utils/WPConfigTransformer.php';
 
 /**
  * Add custom AJAX for webhook
@@ -76,17 +77,19 @@ function ale_config_menu()
 
 function config_render()
 {
-    $encrypt_key = get_option(AleConfiguration::$ENCRYPT_KEY);
-    $api_key = get_option(AleConfiguration::$API_KEY);
-    $checksum_key = get_option(AleConfiguration::$CHECKSUM_KEY);
+    
+    $securi_key = json_decode(UDOO_ALEPAY);
+    $encrypt_key = $securi_key->encrypt_key;
+    $api_key = $securi_key->api_key;
+    $checksum_key = $securi_key->checksum_key;
+
     $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
     $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
     $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);
     $email = get_option(AleConfiguration::$EMAIL);
     $connected = get_option(AleConfiguration::$CONNECTED);
     $test_mode = get_option(AleConfiguration::$TEST_MODE);
-    $webhook = get_option(AleConfiguration::$WEBHOOK);
-    $site = get_option(AleConfiguration::$SITE_NAME);
+    $namespace = get_option(AleConfiguration::$NAME_SPACE);
     $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
 
     $connected = $connected == true ? 'checked' : '';
@@ -127,14 +130,8 @@ function config_render()
             </div>
 
             <div class="item">
-                <label for="alepay_site_name"><strong>Site name</strong></label>
-                <input name="alepay_site_name" type="text" value=<?php echo $site; ?>>
-            </div>
-
-
-            <div class="item">
-                <label for="alepay_webhook"><strong>Alepay Webhook URL</strong></label>
-                <input name="alepay_webhook" type="text" value=<?php echo $webhook; ?>>
+                <label for="alepay_name_space"><strong>Namespace</strong></label>
+                <input name="alepay_name_space" type="text" value=<?php echo $namespace; ?>>
             </div>
 
             <div class="item-checkbox">
@@ -150,12 +147,12 @@ function config_render()
             <h3>Message</h3>
             <div class="item">
                 <label for="checkout_message">Email comfirm checkout</label>
-                <?php 
-                if(empty($chekout_message)){
+                <?php
+                if (empty($chekout_message)) {
                     $chekout_message = 'Một giao dịch từ $site cần bạn xác nhận. Mã giao giao dịch là $sub_id. Bạn vui lòng truy cập đường dẫn sau để xác nhận giao dịch $url.';
                 }
                 ?>
-                <textarea id="checkout_message" name="checkout_message" rows="4" cols="50"><?php echo $chekout_message?></textarea>
+                <textarea id="checkout_message" name="checkout_message" rows="4" cols="50"><?php echo $chekout_message ?></textarea>
             </div>
             <h4>Fileds is require: $sub_id, $url</h4>
 
@@ -176,7 +173,22 @@ function config_render()
         $url_live = $_POST['alepay_base_url_live'];
         $email = $_POST['alepay_email'];
         $webhook = $_POST['alepay_webhook'];
-        $site_name = $_POST['alepay_site_name'];
+        $namespace = $_POST['alepay_name_space'];
+
+        $securi_key = array(
+            'api_key' => $api_key,
+            'encrypt_key' => $encrypt_key,
+            'checksum_key' => $checksum_key,
+        );
+        $securi_encrypt = json_encode($securi_key);
+
+        $config_transformer = new WPConfigTransformer(fs_get_wp_config_path());
+
+        if ($config_transformer->exists('constant', 'UDOO_ALEPAY')) {
+            $config_transformer->update('constant', 'UDOO_ALEPAY', $securi_encrypt);
+        } else {
+            $config_transformer->add('constant', 'UDOO_ALEPAY', $securi_encrypt);
+        }
 
         if (isset($_POST['alepay_connect_status'])) {
             $connected = true;
@@ -189,35 +201,29 @@ function config_render()
             $test_mode = false;
         }
 
-        if (empty(get_option(AleConfiguration::$SITE_NAME))) {
-            add_option(AleConfiguration::$SITE_NAME, $site_name);
+        if (empty(get_option(AleConfiguration::$NAME_SPACE))) {
+            add_option(AleConfiguration::$NAME_SPACE, $namespace);
         } else {
-            update_option(AleConfiguration::$SITE_NAME, $site_name);
+            update_option(AleConfiguration::$NAME_SPACE, $namespace);
         }
 
-        if (empty(get_option(AleConfiguration::$WEBHOOK))) {
-            add_option(AleConfiguration::$WEBHOOK, $webhook);
-        } else {
-            update_option(AleConfiguration::$WEBHOOK, $webhook);
-        }
+        // if (empty(get_option(AleConfiguration::$ENCRYPT_KEY))) {
+        //     add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
+        // } else {
+        //     update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
+        // }
 
-        if (empty(get_option(AleConfiguration::$ENCRYPT_KEY))) {
-            add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
-        } else {
-            update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
-        }
+        // if (empty(get_option(AleConfiguration::$API_KEY))) {
+        //     add_option(AleConfiguration::$API_KEY, $api_key);
+        // } else {
+        //     update_option(AleConfiguration::$API_KEY, $api_key);
+        // }
 
-        if (empty(get_option(AleConfiguration::$API_KEY))) {
-            add_option(AleConfiguration::$API_KEY, $api_key);
-        } else {
-            update_option(AleConfiguration::$API_KEY, $api_key);
-        }
-
-        if (empty(get_option(AleConfiguration::$CHECKSUM_KEY))) {
-            add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
-        } else {
-            update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
-        }
+        // if (empty(get_option(AleConfiguration::$CHECKSUM_KEY))) {
+        //     add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
+        // } else {
+        //     update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
+        // }
 
         if (empty(get_option(AleConfiguration::$BASE_URL_V3))) {
             add_option(AleConfiguration::$BASE_URL_V3, $url_v3);
@@ -255,4 +261,24 @@ function config_render()
             update_option(AleConfiguration::$TEST_MODE, $test_mode);
         }
     }
+}
+
+
+function fs_get_wp_config_path()
+{
+    $base = dirname(__FILE__);
+    $path = false;
+
+    if (@file_exists(dirname(dirname($base)) . "/wp-config.php")) {
+        $path = dirname(dirname($base)) . "/wp-config.php";
+    } else
+    if (@file_exists(dirname(dirname(dirname($base))) . "/wp-config.php")) {
+        $path = dirname(dirname(dirname($base))) . "/wp-config.php";
+    } else
+        $path = false;
+
+    if ($path != false) {
+        $path = str_replace("\\", "/", $path);
+    }
+    return $path;
 }
