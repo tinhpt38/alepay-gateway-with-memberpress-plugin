@@ -10,7 +10,7 @@ if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
 }
 
-class DLHMemeberpressWebhookHandler
+class AlepayWebhookHandler
 {
     private array $args;
 
@@ -30,23 +30,24 @@ class DLHMemeberpressWebhookHandler
                 'live' => get_option(AleConfiguration::$BASE_URL_LIVE),
             ),
             'is_test_mode' => get_option(AleConfiguration::$TEST_MODE),
-            'callbackUrl' => 'callbackUrl',
+
         ];
 
         $this->alepayAPI = new Alepay($this->args);
-
+        
         add_action('rest_api_init', function () {
-            register_rest_route('tronghieu', '/test', array(
+            $route = get_option(AleConfiguration::$SITE_NAME) ;
+            register_rest_route($route, '/alepay-whk', array(
                 'methods' => 'POST',
                 'callback' => [$this, 'handle_memeberpress_webhook']
             ));
 
-            register_rest_route('tronghieu', '/reactive/success', array(
+            register_rest_route($route, '/reactive/success', array(
                 'methods' => 'GET',
                 'callback' => [$this, 'handle_reactive_subscription_success']
             ));
 
-            register_rest_route('tronghieu', '/reactive/failure', array(
+            register_rest_route($route, '/reactive/failure', array(
                 'methods' => 'GET',
                 'callback' => [$this, 'handle_reactive_subscription_failure']
             ));

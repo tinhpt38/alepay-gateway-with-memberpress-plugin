@@ -12,19 +12,19 @@
  */
 
 require_once __DIR__ . '/utils/AleConfiguration.php';
-require_once __DIR__ . '/gateways/DLHMemeberpressWebhookHandler.php';
+require_once __DIR__ . '/gateways/AlepayWebhookHandler.php';
 
 /**
  * Add custom AJAX for webhook
  */
-$instance = new DLHMemeberpressWebhookHandler();
+$instance = new AlepayWebhookHandler();
 
 
 function alepay_plugin_load_textdomain()
 {
-
     load_plugin_textdomain('alepay-gateway', false, basename(dirname(__FILE__)) . '/languages/');
 }
+
 add_action('init', 'alepay_plugin_load_textdomain');
 
 
