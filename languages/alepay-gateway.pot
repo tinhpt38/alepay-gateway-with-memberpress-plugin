@@ -1,0 +1,120 @@
+# Copyright (C) 2021 TinhPhan
+# This file is distributed under the same license as the Alepay Gateway plugin.
+msgid ""
+msgstr ""
+"Project-Id-Version: Alepay Gateway 2.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/alepay-gateway\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2021-08-21T04:23:28+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.5.0\n"
+"X-Domain: alepay-gateway\n"
+
+#. Plugin Name of the plugin
+msgid "Alepay Gateway"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://dalathub.com"
+msgstr ""
+
+#. Description of the plugin
+msgid "Integrated with MemberPress"
+msgstr ""
+
+#. Author of the plugin
+msgid "TinhPhan"
+msgstr ""
+
+#. Author URI of the plugin
+msgid "tinhpt.38@gmail.com"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:21
+#: gateways/MeprAlepayGateway.php:24
+msgid "Alepay"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:23
+msgid "Payment with Alepay"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1496
+#: gateways/MeprAlepayGateway.php:1698
+msgid "First name"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1498
+#: gateways/MeprAlepayGateway.php:1700
+msgid "Last name"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1500
+#: gateways/MeprAlepayGateway.php:1702
+msgid "Email"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1502
+#: gateways/MeprAlepayGateway.php:1704
+msgid "Phone"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1505
+#: gateways/MeprAlepayGateway.php:1707
+msgid "Address"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1508
+#: gateways/MeprAlepayGateway.php:1710
+msgid "City"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1512
+#: gateways/MeprAlepayGateway.php:1714
+msgid "State"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1520
+#: gateways/MeprAlepayGateway.php:1722
+msgid "Country"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1522
+#: gateways/MeprAlepayGateway.php:1724
+msgid "Description"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1524
+#: gateways/MeprAlepayGateway.php:1726
+msgid "Data fields cannot be left blank"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1525
+msgid "Select payment type"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1531
+#: gateways/MeprAlepayGateway.php:1539
+msgid "Domestic: ATM, IB, QRCODE"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1534
+msgid "International: VISA, MasterCard"
+msgstr ""
+
+#: gateways/MeprAlepayGateway.php:1545
+msgid "International: VISA, MasterCard..."
+msgstr ""
+
+#: plugins.php:71
+#: plugins.php:72
+msgid "Alepay Settings"
+msgstr ""
+
+#: plugins.php:100
+msgid "Configuration AlePay Gateway"
+msgstr ""

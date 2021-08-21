@@ -23,7 +23,7 @@ $instance = new AlepayWebhookHandler();
 function alepay_plugin_load_textdomain()
 {
     error_log(basename(dirname(__FILE__)) . '/languages/');
-    load_plugin_textdomain('alepay-gateway', false, basename(dirname(__FILE__)) . '/languages/');
+    load_plugin_textdomain( 'alepay-gateway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 }
 
 
