@@ -20,11 +20,12 @@ require_once __DIR__ . '/utils/WPConfigTransformer.php';
  */
 $instance = new AlepayWebhookHandler();
 
-
 function alepay_plugin_load_textdomain()
 {
+    error_log(basename(dirname(__FILE__)) . '/languages/');
     load_plugin_textdomain('alepay-gateway', false, basename(dirname(__FILE__)) . '/languages/');
 }
+
 
 add_action('init', 'alepay_plugin_load_textdomain');
 

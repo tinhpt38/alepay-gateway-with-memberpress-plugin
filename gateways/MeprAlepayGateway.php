@@ -1693,7 +1693,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         <div class="mp-form-label">
 
                             <div id="card-element" class="mepr-alepay-card-element">
-                                <label class="mepr-buyer-first-name"><?php echo __('First name', 'alepay-gateway') . ' (*)' ?></label>
+                                <label class="mepr-buyer-first-name"><?php _e('First name', 'alepay-gateway') . ' (*)' ?></label>
                                 <input type=text name="mepr-buyer-first-name" value="<?php echo $user->first_name ?>">
                                 <label class="mepr-buyer-last-name"><?php echo __('Last name', 'alepay-gateway') . ' (*)' ?></label>
                                 <input type=text name="mepr-buyer-last-name" value="<?php echo $user->last_name ?>">

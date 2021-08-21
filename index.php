@@ -1,2 +1,0 @@
-<?php
-//Happyier than ever

@@ -18,10 +18,16 @@ class AlepayWebhookHandler
 
     public function __construct()
     {
+
+        $securi_key = json_decode(UDOO_ALEPAY);
+        $encrypt_key = $securi_key->encrypt_key;
+        $api_key = $securi_key->api_key;
+        $checksum_key = $securi_key->checksum_key;
+
         $this->args = [
-            'apiKey' => get_option(AleConfiguration::$API_KEY),
-            'encryptKey' => get_option(AleConfiguration::$ENCRYPT_KEY),
-            'checksumKey' => get_option(AleConfiguration::$CHECKSUM_KEY),
+            'apiKey' => $api_key,
+            'encryptKey' => $encrypt_key,
+            'checksumKey' => $checksum_key,
             'base_urls' => array(
                 'sanbox' => array(
                     'v3' => get_option(AleConfiguration::$BASE_URL_V3),
