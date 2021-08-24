@@ -24,6 +24,10 @@ class AlepayWebhookHandler
         $api_key = $securi_key->api_key;
         $checksum_key = $securi_key->checksum_key;
 
+        if (!$securi_key || !$encrypt_key || !$api_key || !$checksum_key) {
+            return;
+        }
+
         $this->args = [
             'apiKey' => $api_key,
             'encryptKey' => $encrypt_key,
