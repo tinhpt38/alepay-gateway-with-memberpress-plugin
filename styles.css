@@ -38,3 +38,7 @@
 .alp-container .item-checkbox input {
     padding-left: 64px;
 }
+
+.sticky-header #comments {
+    position: static !important;
+}
