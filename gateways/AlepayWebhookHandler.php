@@ -16,9 +16,12 @@ class AlepayWebhookHandler
 
     private Alepay $alepayAPI;
 
+    private string $webhook_url;
+    private string $success_url;
+    private string $failure_url;
+
     public function __construct()
     {
-
         $securi_key = json_decode(UDOO_ALEPAY);
         $encrypt_key = $securi_key->encrypt_key;
         $api_key = $securi_key->api_key;
@@ -62,16 +65,41 @@ class AlepayWebhookHandler
                 'callback' => [$this, 'handle_reactive_subscription_failure']
             ));
         });
-    }
 
-    public function get_server_protocol()
-    {
-        return (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+        $webhooks = get_option('mpdt_webhooks', false);
+        if ($webhooks == "")
+            $webhooks = [];
+
+        $this->webhook_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/alepay-whk';
+        $this->success_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/reactive/success';
+        $this->failure_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/reactive/failure';
+
+        $urls = array_column($webhooks, 'url');
+        if (count($webhooks) == 0 || !in_array($this->webhook_url, $urls)) {
+            $id = rand(1, 99999);
+            $webhooks[$id] = [
+                'url' => $this->webhook_url,
+                'events' => [
+                    'all' => 'on'
+                ]
+            ];
+            update_option('mpdt_webhooks', $webhooks);
+        }
     }
 
     public function handle_memeberpress_webhook(WP_REST_Request $request)
     {
         $request_data = json_decode($request->get_body());
+
+        error_log('WEBHOOKS');
+        error_log(print_r($request_data, true));
+
+        $webhook_event = $request_data->event;
+        $webhook_type = $request_data->type;
+        $webhook_payload = $request_data->data;
+
+        if ($webhook_event != 'subscription-created')
+            return;
 
         $merchant_id = $request_data->data->member->id;
 
@@ -80,8 +108,8 @@ class AlepayWebhookHandler
         $amount = $request_data->data->total;
         $currency = 'VND';
         $description = __('Auto subscription for member ' . $merchant_id);
-        $return_url = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]" . '/buddy/wp-json/tronghieu/reactive/success';
-        $cancelUrl = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]" . '/buddy/wp-json/tronghieu/reactive/failure';
+        $return_url = $this->success_url;
+        $cancelUrl = $this->failure_url;
         $paymentHours = '1';
 
         // Prepare data
@@ -96,11 +124,11 @@ class AlepayWebhookHandler
             'paymentHours' => $paymentHours
         ];
 
-        error_log('Prepared data');
-        error_log(print_r($data, true));
-
-        error_log('Webhook data');
-        error_log(print_r($request_data, true));
+//        error_log('Prepared data');
+//        error_log(print_r($data, true));
+//
+//        error_log('Webhook data');
+//        error_log(print_r($request_data, true));
 
         $result = $this->alepayAPI->sendTokenizationPayment($data);
 
