@@ -102,47 +102,47 @@ function config_render()
         <form name="alepay-settings" id="alepay-settings" method="post" action="<?php echo admin_url('?page=alepay-setting'); ?>">
             <h3>General</h3>
             <div class="item">
-                <label for="alepay_encrypt_key"><strong>Encrypt</strong></label>
-                <input name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
+                <label for="alepay_encrypt_key"><strong>Encrypt Key</strong></label>
+                <input id="alepay_encrypt_key" name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
             </div>
             <div class="item">
-                <label for="alepay_api_key"><strong>Encrypt</strong></label>
-                <input name="alepay_api_key" type="text" value=<?php echo $api_key ?>>
+                <label for="alepay_api_key"><strong>API Key</strong></label>
+                <input id="alepay_api_key" name="alepay_api_key" type="text" value=<?php echo $api_key ?>>
             </div>
             <div class="item">
-                <label for="alepay_checksum_key"><strong>Checksum key</strong></label>
-                <input name="alepay_checksum_key" type="text" value=<?php echo $checksum_key ?>>
+                <label for="alepay_checksum_key"><strong>Checksum Key</strong></label>
+                <input id="alepay_checksum_key" name="alepay_checksum_key" type="text" value=<?php echo $checksum_key ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_v3"><strong>Base URL Sanbox v3</strong></label>
-                <input name="alepay_base_url_v3" type="text" value=<?php echo $base_url_v3; ?>>
+                <input id="alepay_base_url_v3" name="alepay_base_url_v3" type="text" value=<?php echo $base_url_v3; ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_v1"><strong>Base URL Sanbox v1</strong></label>
-                <input name="alepay_base_url_v1" type="text" value=<?php echo $base_url_v1; ?>>
+                <input id="alepay_base_url_v1" name="alepay_base_url_v1" type="text" value=<?php echo $base_url_v1; ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_live"><strong>Base URL LIVE</strong></label>
-                <input name="alepay_base_url_live" type="text" value=<?php echo $base_url_live; ?>>
+                <input id="alepay_base_url_live" name="alepay_base_url_live" type="text" value=<?php echo $base_url_live; ?>>
             </div>
             <div class="item">
                 <label for="alepay_email"><strong>Email</strong></label>
-                <input name="alepay_email" type="text" value=<?php echo $email; ?>>
+                <input id="alepay_email" name="alepay_email" type="text" value=<?php echo $email; ?>>
             </div>
 
             <div class="item">
                 <label for="alepay_name_space"><strong>Namespace</strong></label>
-                <input name="alepay_name_space" type="text" value=<?php echo $namespace; ?>>
+                <input id="alepay_name_space" name="alepay_name_space" type="text" value=<?php echo $namespace; ?>>
             </div>
 
             <div class="item-checkbox">
                 <label for="alepay_connect_status"><strong>Connect Status</strong></label>
-                <input name="alepay_connect_status" type="checkbox" <?php echo $connected ?>>
+                <input id="alepay_connect_status" name="alepay_connect_status" type="checkbox" <?php echo $connected ?>>
             </div>
 
             <div class="item-checkbox">
                 <label for="is_test_mode"><strong>Test Mode</strong></label>
-                <input name="is_test_mode" type="checkbox" <?php echo $test_mode ?>>
+                <input id="is_test_mode" name="is_test_mode" type="checkbox" <?php echo $test_mode ?>>
             </div>
             <hr />
             <h3>Message</h3>
