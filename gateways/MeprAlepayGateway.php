@@ -374,9 +374,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $txn->trans_num = $sub->subscr_id;
         $txn->status = MeprTransaction::$complete_str;
-        $txn->txn_type = MeprTransaction::$subscription_confirmation_str;
+        $txn->txn_type = MeprTransaction::$payment_str;
         // $txn->expires_at = $expires_at;
-        $txn->set_subtotal(0.0);
+        // $txn->set_subtotal(0.0);
         error_log('Mepre Transaction Store ' . print_r($txn, true));
         $txn->store();
 
