@@ -15,7 +15,7 @@ class Alepay {
     protected $checksumKey = "";
     protected $apiKey = "";
     protected $callbackUrl = "";
-    protected $isTestMode = true;
+    protected $isTestMode = false;
 
     protected $baseURL = array();
 
@@ -37,15 +37,7 @@ class Alepay {
 
 
     public function __construct($opts) {
-  // header('Access-Control-Allow-Origin: *');
-        // header("Access-Control-Allow-Credentials: true");
-        // header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
-        // header('Access-Control-Max-Age: 1000');
-        // header('Access-Control-Allow-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description');
-
-        /*
-        * Require curl and json extension
-        */
+        error_log(__METHOD__);
 
         if (!function_exists('curl_init')) {
             throw new \Exception('Alepay needs the CURL PHP extension.');
@@ -57,29 +49,37 @@ class Alepay {
         // set KEY
         if (isset($opts) && !empty($opts["apiKey"])) {
             $this->apiKey = $opts["apiKey"];
+            error_log('apiKey :'. $this->apiKey);
         } else {
             throw new \Exception("API key is required !");
         }
         if (isset($opts) && !empty($opts["encryptKey"])) {
             $this->encryptKey = $opts["encryptKey"];
+            error_log('encryptKey :'. $this->encryptKey);
         } else {
             throw new \Exception("Encrypt key is required !");
         }
         if (isset($opts) && !empty($opts["checksumKey"])) {
             $this->checksumKey = $opts["checksumKey"];
+            error_log('checksumKey :'. $this->checksumKey);
         } else {
             throw new \Exception("Checksum key is required !");
         }
         if (isset($opts) && !empty($opts["callbackUrl"])) {
             $this->callbackUrl = $opts["callbackUrl"];
+            error_log('callbackUrl :'. $this->callbackUrl);
         }
 
         if (isset($opts) && !empty($opts["is_test_mode"])) {
             $this->isTestMode = $opts["is_test_mode"];
+            error_log('isTestMode :'. $this->isTestMode);
+        }else{
+
         }
 
         if (isset($opts) && !empty($opts["base_urls"])) {
             $this->baseURL = $opts["base_urls"];
+            error_log('baseURL :'. $this->baseURL);
         }
 
         if ($this->isTestMode) {
@@ -87,6 +87,8 @@ class Alepay {
         } else {
             $this->env = 'live';
         }
+        error_log('ENV:'.$this->env);
+        
 
         $this->alepayUtils = new \AlepayUtils();
     }
@@ -128,17 +130,16 @@ class Alepay {
         $data['tokenKey'] = $this->apiKey;
         $signature = $this->alepayUtils->makeSignature($data, $this->checksumKey);
         $data['signature'] = $signature;
-        error_log('sendOrderToAlepayDomestic ' . $url);
         $result = $this->sendRequestToAlepayV3($data, $url);
         return $result;
     }
 
     private function sendRequestToAlepayV3($data, $url)
     {
-
+        error_log(__METHOD__);
+        error_log(print_r($url, true));
         error_log(print_r($data, true));
         $data_string = json_encode($data);
-
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
@@ -319,7 +320,8 @@ class Alepay {
 
     private function sendRequestToAlepay($data, $url) {
         error_log(__METHOD__);
-        error_log('before data' . print_r(json_encode($data),true));
+        error_log('before encrypt ' . print_r(json_encode($data),true));
+        error_log(print_r($data, true));
         $dataEncrypt = $this->alepayUtils->encryptData(json_encode($data), $this->encryptKey);
         $checksum = md5($dataEncrypt . $this->checksumKey);
         $items = array(

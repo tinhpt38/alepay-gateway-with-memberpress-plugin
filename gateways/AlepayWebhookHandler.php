@@ -20,14 +20,67 @@ class AlepayWebhookHandler
     private string $success_url;
     private string $failure_url;
 
+    function udoo_get_settings()
+{
+
+    // $securi = \Alepay\UdooSecuri::get_security();
+    // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
+    // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
+    // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
+
+    $securi = get_option(AleConfiguration::$SECURI,'');
+    $encrypt_key = '';
+    $api_key = '';
+    $checksum_key = '';
+    $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
+    $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
+    $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
+    $email = get_option(AleConfiguration::$EMAIL,'');
+    $connected = get_option(AleConfiguration::$CONNECTED,'');
+    $test_mode = get_option(AleConfiguration::$TEST_MODE,'');
+    $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
+    $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
+    $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
+
+    $connected = $connected == 'yes' ? 'checked' : '';
+    $test_mode = $test_mode == 'yes' ? 'checked' : '';
+
+
+    return array(
+        'securi' => $securi,
+        'encrypt' => $encrypt_key,
+        'api' => $api_key,
+        'url_live' => $base_url_live,
+        'url_v3' => $base_url_v3,
+        'url_v1' => $base_url_v1,
+        'checksum' => $checksum_key,
+        'email' => $email,
+        'connected' => $connected,
+        'test_mode' => $test_mode,
+        'namespace' => $namespace,
+        'checkout_message' => $chekout_message,
+        'payment_hours' => $payment_hours,
+    );
+}
+
     public function __construct()
     {
-        $securi_key = json_decode(UDOO_ALEPAY);
-        $encrypt_key = $securi_key->encrypt_key;
-        $api_key = $securi_key->api_key;
-        $checksum_key = $securi_key->checksum_key;
+        error_log(__METHOD__);
+        $settings = $this->udoo_get_settings();
+        $encrypt_key = $settings['encrypt'];
+        $api_key = $settings['api'];
+        $checksum_key = $settings['checksum'];
+        $base_url_v3 = $settings['url_v3'];
+        $base_url_v1 = $settings['url_v1'];
+        $base_url_live = $settings['url_live'];
+        $connected = $settings['connected'];
+        $test_mode = $settings['test_mode'];
+        $namespace = $settings['namespace'];
+        $chekout_message = $settings['checkout_message'];
+        $payment_hours = $settings['payment_hours'];
 
-        if (!$securi_key || !$encrypt_key || !$api_key || !$checksum_key) {
+
+        if (!$encrypt_key || !$api_key || !$checksum_key) {
             return;
         }
 
@@ -37,19 +90,22 @@ class AlepayWebhookHandler
             'checksumKey' => $checksum_key,
             'base_urls' => array(
                 'sanbox' => array(
-                    'v3' => get_option(AleConfiguration::$BASE_URL_V3),
-                    'v1' => get_option(AleConfiguration::$BASE_URL_V1),
+                    'v3' => $base_url_v3,
+                    'v1' => $base_url_v1,
                 ),
-                'live' => get_option(AleConfiguration::$BASE_URL_LIVE),
+                'live' => $base_url_live,
             ),
-            'is_test_mode' => get_option(AleConfiguration::$TEST_MODE),
-
+            'is_test_mode' => $test_mode,
+            'connected' => $connected,
+            'namespace' => $namespace,
+            'chekout_message' => $chekout_message,
+            'payment_hours' => $payment_hours,
         ];
 
         $this->alepayAPI = new Alepay($this->args);
         
         add_action('rest_api_init', function () {
-            $route = get_option(AleConfiguration::$NAME_SPACE) ;
+            $route = $this->args['namespace'];
             register_rest_route($route, '/alepay-whk', array(
                 'methods' => 'POST',
                 'callback' => [$this, 'handle_memeberpress_webhook']
@@ -70,9 +126,9 @@ class AlepayWebhookHandler
         if ($webhooks == "")
             $webhooks = [];
 
-        $this->webhook_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/alepay-whk';
-        $this->success_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/reactive/success';
-        $this->failure_url = get_site_url() . '/wp-json/' . get_option(AleConfiguration::$NAME_SPACE) . '/reactive/failure';
+        $this->webhook_url = get_site_url() . '/wp-json/' . $namespace . '/alepay-whk';
+        $this->success_url = get_site_url() . '/wp-json/' . $namespace . '/reactive/success';
+        $this->failure_url = get_site_url() . '/wp-json/' . $namespace . '/reactive/failure';
 
         $urls = array_column($webhooks, 'url');
         if (count($webhooks) == 0 || !in_array($this->webhook_url, $urls)) {
@@ -110,7 +166,7 @@ class AlepayWebhookHandler
         $description = __('Auto subscription for member ' . $merchant_id);
         $return_url = $this->success_url;
         $cancelUrl = $this->failure_url;
-        $paymentHours = '1';
+        $paymentHours = $this->args['payment_hours'];
 
         // Prepare data
         $data = [
@@ -134,7 +190,7 @@ class AlepayWebhookHandler
 
         if (is_object($result)) {
             error_log('result' . print_r($result, true));
-            if (!get_option(AleConfiguration::$CONNECTED)) {
+            if (!$this->args['connected']) {
                 $checkout_url = $result->checkoutUrl;
                 $message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
                 $message = str_replace(['$sub_id', '$url'], [$order_code, $checkout_url], $message);

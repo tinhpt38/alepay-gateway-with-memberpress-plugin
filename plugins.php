@@ -2,11 +2,11 @@
 
 /**
  * Plugin Name:       Alepay Gateway
- * Plugin URI:        https://dalathub.com
+ * Plugin URI:        https://udoo.ooo
  * Description:       Integrated with MemberPress
- * Author:            TinhPhan
- * Author URI:        tinhpt.38@gmail.com
- * Version:           2.0.0
+ * Author:            Udoo
+ * Author URI:        https://udoo.ooo
+ * Version:           2.0.1
  * Text Domain:       alepay-gateway
  * Domain Path:       /languages
  */
@@ -22,8 +22,7 @@ $instance = new AlepayWebhookHandler();
 
 function alepay_plugin_load_textdomain()
 {
-    error_log(basename(dirname(__FILE__)) . '/languages/');
-    load_plugin_textdomain( 'alepay-gateway', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+    load_plugin_textdomain('alepay-gateway', false, dirname(plugin_basename(__FILE__)) . '/languages/');
 }
 
 
@@ -76,25 +75,59 @@ function ale_config_menu()
     );
 }
 
+
+
+function udoo_get_settings()
+{
+
+    // $securi = \Alepay\UdooSecuri::get_security();
+    // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
+    // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
+    // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
+
+    $securi = get_option(AleConfiguration::$SECURI,'');
+    $encrypt_key = '';
+    $api_key = '';
+    $checksum_key = '';
+    $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
+    $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
+    $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
+    $email = get_option(AleConfiguration::$EMAIL,'');
+    $connected = get_option(AleConfiguration::$CONNECTED,'');
+    $test_mode = get_option(AleConfiguration::$TEST_MODE,'');
+    $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
+    $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
+    $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
+
+    $connected = $connected == 'yes' ? 'checked' : '';
+    $test_mode = $test_mode == 'yes' ? 'checked' : '';
+
+
+    return array(
+        'securi' => $securi,
+        'encrypt' => $encrypt_key,
+        'api' => $api_key,
+        'url_live' => $base_url_live,
+        'url_v3' => $base_url_v3,
+        'url_v1' => $base_url_v1,
+        'checksum' => $checksum_key,
+        'email' => $email,
+        'connected' => $connected,
+        'test_mode' => $test_mode,
+        'namespace' => $namespace,
+        'checkout_message' => $chekout_message,
+        'payment_hours' => $payment_hours,
+    );
+}
+
+
 function config_render()
 {
-    
-    $securi_key = json_decode(UDOO_ALEPAY);
-    $encrypt_key = $securi_key->encrypt_key;
-    $api_key = $securi_key->api_key;
-    $checksum_key = $securi_key->checksum_key;
+    error_log(__METHOD__);
 
-    $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
-    $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
-    $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);
-    $email = get_option(AleConfiguration::$EMAIL);
-    $connected = get_option(AleConfiguration::$CONNECTED);
-    $test_mode = get_option(AleConfiguration::$TEST_MODE);
-    $namespace = get_option(AleConfiguration::$NAME_SPACE);
-    $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
+    $settings = udoo_get_settings();
+    error_log(print_r($settings,true));
 
-    $connected = $connected == true ? 'checked' : '';
-    $test_mode = $test_mode == true ? 'checked' : '';
 ?>
 
     <h2><?php echo __('Configuration AlePay Gateway', 'alepay-gateway') ?></h2>
@@ -103,59 +136,71 @@ function config_render()
             <h3>General</h3>
             <div class="item">
                 <label for="alepay_encrypt_key"><strong>Encrypt Key</strong></label>
-                <input id="alepay_encrypt_key" name="alepay_encrypt_key" type="text" value=<?php echo $encrypt_key ?>>
+                <input id="alepay_encrypt_key" name="alepay_encrypt_key" type="text" value=<?php echo $settings['encrypt'] ?>>
             </div>
             <div class="item">
                 <label for="alepay_api_key"><strong>API Key</strong></label>
-                <input id="alepay_api_key" name="alepay_api_key" type="text" value=<?php echo $api_key ?>>
+                <input id="alepay_api_key" name="alepay_api_key" type="text" value=<?php echo $settings['api'] ?>>
             </div>
             <div class="item">
                 <label for="alepay_checksum_key"><strong>Checksum Key</strong></label>
-                <input id="alepay_checksum_key" name="alepay_checksum_key" type="text" value=<?php echo $checksum_key ?>>
+                <input id="alepay_checksum_key" name="alepay_checksum_key" type="text" value=<?php echo $settings['checksum'] ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_v3"><strong>Base URL Sanbox v3</strong></label>
-                <input id="alepay_base_url_v3" name="alepay_base_url_v3" type="text" value=<?php echo $base_url_v3; ?>>
+                <input id="alepay_base_url_v3" name="alepay_base_url_v3" type="text" value=<?php echo $settings['url_v3']; ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_v1"><strong>Base URL Sanbox v1</strong></label>
-                <input id="alepay_base_url_v1" name="alepay_base_url_v1" type="text" value=<?php echo $base_url_v1; ?>>
+                <input id="alepay_base_url_v1" name="alepay_base_url_v1" type="text" value=<?php echo $settings['url_v1']; ?>>
             </div>
             <div class="item">
                 <label for="alepay_base_url_live"><strong>Base URL LIVE</strong></label>
-                <input id="alepay_base_url_live" name="alepay_base_url_live" type="text" value=<?php echo $base_url_live; ?>>
+                <input id="alepay_base_url_live" name="alepay_base_url_live" type="text" value=<?php echo $settings['url_live']; ?>>
             </div>
             <div class="item">
                 <label for="alepay_email"><strong>Email</strong></label>
-                <input id="alepay_email" name="alepay_email" type="text" value=<?php echo $email; ?>>
+                <input id="alepay_email" name="alepay_email" type="text" value=<?php echo $settings['email']; ?>>
             </div>
 
             <div class="item">
                 <label for="alepay_name_space"><strong>Namespace</strong></label>
-                <input id="alepay_name_space" name="alepay_name_space" type="text" value=<?php echo $namespace; ?>>
+                <input id="alepay_name_space" name="alepay_name_space" type="text" value=<?php echo $settings['namespace']; ?>>
+            </div>
+
+            <div class="item">
+                <label for="alepay_payment_hours"><strong>PAYMENT HOURS</strong></label>
+                <input id="alepay_payment_hours" name="alepay_payment_hours" type="number" value=<?php echo $settings['payment_hours']; ?>>
             </div>
 
             <div class="item-checkbox">
                 <label for="alepay_connect_status"><strong>Connect Status</strong></label>
-                <input id="alepay_connect_status" name="alepay_connect_status" type="checkbox" <?php echo $connected ?>>
+                <input id="alepay_connect_status" name="alepay_connect_status" type="checkbox" <?php echo $settings['connected'] ?>>
             </div>
 
             <div class="item-checkbox">
                 <label for="is_test_mode"><strong>Test Mode</strong></label>
-                <input id="is_test_mode" name="is_test_mode" type="checkbox" <?php echo $test_mode ?>>
+                <input id="is_test_mode" name="is_test_mode" type="checkbox" <?php echo $settings['test_mode']; ?>>
             </div>
             <hr />
             <h3>Message</h3>
             <div class="item">
                 <label for="checkout_message">Email comfirm checkout</label>
                 <?php
-                if (empty($chekout_message)) {
+                if (empty($settings['checkout_message'])) {
                     $chekout_message = 'Một giao dịch từ $site cần bạn xác nhận. Mã giao giao dịch là $sub_id. Bạn vui lòng truy cập đường dẫn sau để xác nhận giao dịch $url.';
+                } else {
+                    $checkout_message = $settings['checkout_message'];
                 }
                 ?>
-                <textarea id="checkout_message" name="checkout_message" rows="4" cols="50"><?php echo $chekout_message ?></textarea>
+                <textarea id="checkout_message" name="checkout_message" rows="4" cols="50"><?php echo $checkout_message; ?></textarea>
             </div>
             <h4>Fileds is require: $sub_id, $url</h4>
+            <h3>Security</h3>
+            <div class="item">
+                <label for="alepay_securi"><strong>Encrypt Database Key</strong></label>
+                <input id="alepay_securi" name="alepay_securi" type="text" value=<?php echo $settings['securi']; ?>>
+            </div>
 
             <div class="item">
                 <button class="button button-primary" name="alepay-setting-submit" type="submit">Save change</button>
@@ -166,100 +211,115 @@ function config_render()
 <?php
 
     if (isset($_POST['alepay-setting-submit'])) {
-        $encrypt_key = sanitize_text_field($_POST['alepay_encrypt_key']);
+        $encrypt_key = $_POST['alepay_encrypt_key'];
         $api_key = $_POST['alepay_api_key'];
         $checksum_key = $_POST['alepay_checksum_key'];
+
         $url_v3 = $_POST['alepay_base_url_v3'];
         $url_v1 = $_POST['alepay_base_url_v1'];
         $url_live = $_POST['alepay_base_url_live'];
         $email = $_POST['alepay_email'];
         $namespace = $_POST['alepay_name_space'];
+        $payment_hours = $_POST['alepay_payment_hours'];
 
-        $securi_key = array(
-            'api_key' => $api_key,
-            'encrypt_key' => $encrypt_key,
-            'checksum_key' => $checksum_key,
-        );
-        $securi_encrypt = json_encode($securi_key);
+        $securi = $_POST['alepay_securi'];
 
-        $config_transformer = new WPConfigTransformer(fs_get_wp_config_path());
-
-        if ($config_transformer->exists('constant', 'UDOO_ALEPAY')) {
-            $config_transformer->update('constant', 'UDOO_ALEPAY', $securi_encrypt);
-        } else {
-            $config_transformer->add('constant', 'UDOO_ALEPAY', $securi_encrypt);
-        }
+        $checkout_message = $_POST['checkout_message'];
 
         if (isset($_POST['alepay_connect_status'])) {
-            $connected = true;
+            $connected = 'yes';
         } else {
-            $connected = false;
+            $connected = 'no';
         }
         if (isset($_POST['is_test_mode'])) {
-            $test_mode = true;
+            $test_mode = 'yes';
         } else {
-            $test_mode = false;
+            $test_mode = 'no';
+        }
+        
+        //region -- save options
+
+        if (!get_option(AleConfiguration::$CHECKOUT_MESSAGE)) {
+            add_option(AleConfiguration::$CHECKOUT_MESSAGE, $checkout_message);
+        } else {
+            update_option(AleConfiguration::$CHECKOUT_MESSAGE, $checkout_message);
         }
 
-        if (empty(get_option(AleConfiguration::$NAME_SPACE))) {
+
+        if (!get_option(AleConfiguration::$NAME_SPACE)) {
             add_option(AleConfiguration::$NAME_SPACE, $namespace);
         } else {
             update_option(AleConfiguration::$NAME_SPACE, $namespace);
         }
 
-        // if (empty(get_option(AleConfiguration::$ENCRYPT_KEY))) {
-        //     add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
-        // } else {
-        //     update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key);
-        // }
-
-        // if (empty(get_option(AleConfiguration::$API_KEY))) {
-        //     add_option(AleConfiguration::$API_KEY, $api_key);
-        // } else {
-        //     update_option(AleConfiguration::$API_KEY, $api_key);
-        // }
-
-        // if (empty(get_option(AleConfiguration::$CHECKSUM_KEY))) {
-        //     add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
-        // } else {
-        //     update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key);
-        // }
-
-        if (empty(get_option(AleConfiguration::$BASE_URL_V3))) {
+        if (!get_option(AleConfiguration::$BASE_URL_V3)) {
             add_option(AleConfiguration::$BASE_URL_V3, $url_v3);
         } else {
             update_option(AleConfiguration::$BASE_URL_V3, $url_v3);
         }
 
-        if (empty(get_option(AleConfiguration::$BASE_URL_V1))) {
+        if (!get_option(AleConfiguration::$BASE_URL_V1)) {
             add_option(AleConfiguration::$BASE_URL_V1, $url_v1);
         } else {
             update_option(AleConfiguration::$BASE_URL_V1, $url_v1);
         }
 
-        if (empty(get_option(AleConfiguration::$BASE_URL_LIVE))) {
+        if (!get_option(AleConfiguration::$BASE_URL_LIVE)) {
             add_option(AleConfiguration::$BASE_URL_LIVE, $url_live);
         } else {
             update_option(AleConfiguration::$BASE_URL_LIVE, $url_live);
         }
 
-        if (empty(get_option(AleConfiguration::$EMAIL))) {
+        if (!get_option(AleConfiguration::$EMAIL)) {
             add_option(AleConfiguration::$EMAIL, $email);
         } else {
             update_option(AleConfiguration::$EMAIL, $email);
         }
 
-        if (empty(get_option(AleConfiguration::$CONNECTED))) {
+
+        if (!get_option(AleConfiguration::$CONNECTED)) {
             add_option(AleConfiguration::$CONNECTED, $connected);
         } else {
             update_option(AleConfiguration::$CONNECTED, $connected);
         }
 
-        if (empty(get_option(AleConfiguration::$TEST_MODE))) {
+        if (!get_option(AleConfiguration::$TEST_MODE)) {
             add_option(AleConfiguration::$TEST_MODE, $test_mode);
         } else {
             update_option(AleConfiguration::$TEST_MODE, $test_mode);
         }
+
+        if (!get_option(AleConfiguration::$PAYMENT_HOURS)) {
+            add_option(AleConfiguration::$PAYMENT_HOURS, $payment_hours);
+        } else {
+            update_option(AleConfiguration::$PAYMENT_HOURS, $payment_hours);
+        }
+
+        if (!get_option(AleConfiguration::$SECURI)) {
+            add_option(AleConfiguration::$SECURI, $securi);
+        } else {
+            update_option(AleConfiguration::$SECURI, $securi);
+        }
+
+        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY))){
+        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$API_KEY, $api_key, 'yes', $securi);
+        // }else{
+        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$API_KEY, $api_key,'yes', $securi);
+        // }
+
+        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY))){
+        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,'yes',$securi);
+        // }else{
+        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,'yes',$securi);
+        // }
+
+        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY))){
+        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key,'yes',$securi);
+        // }else{
+        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key, 'yes',$securi);
+        // }
+
+        //endregion -- save options
     }
 }
 

@@ -49,6 +49,49 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $this->set_defaults();
     }
 
+    function udoo_get_settings()
+    {
+    
+        // $securi = \Alepay\UdooSecuri::get_security();
+        // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
+        // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
+        // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
+    
+        $securi = get_option(AleConfiguration::$SECURI,'');
+        $encrypt_key = '';
+        $api_key = '';
+        $checksum_key = '';
+        $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
+        $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
+        $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
+        $email = get_option(AleConfiguration::$EMAIL,'');
+        $connected = get_option(AleConfiguration::$CONNECTED,'');
+        $test_mode = get_option(AleConfiguration::$TEST_MODE,'');
+        $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
+        $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
+        $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
+    
+        $connected = $connected == 'yes' ? 'checked' : '';
+        $test_mode = $test_mode == 'yes' ? 'checked' : '';
+    
+    
+        return array(
+            'securi' => $securi,
+            'encrypt' => $encrypt_key,
+            'api' => $api_key,
+            'url_live' => $base_url_live,
+            'url_v3' => $base_url_v3,
+            'url_v1' => $base_url_v1,
+            'checksum' => $checksum_key,
+            'email' => $email,
+            'connected' => $connected,
+            'test_mode' => $test_mode,
+            'namespace' => $namespace,
+            'checkout_message' => $chekout_message,
+            'payment_hours' => $payment_hours,
+        );
+    }
+
     protected function set_defaults()
     {
         error_log(__METHOD__);
@@ -56,17 +99,20 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->settings = array();
         }
 
-        $securi_key = json_decode(UDOO_ALEPAY);
-        $encrypt_key = $securi_key->encrypt_key;
-        $api_key = $securi_key->api_key;
-        $checksum_key = $securi_key->checksum_key;
+        $settings = $this->udoo_get_settings();
+        $encrypt_key = $settings['encrypt'];
+        $api_key = $settings['api'];
+        $checksum_key = $settings['checksum'];
+        $base_url_v3 = $settings['url_v3'];
+        $base_url_v1 = $settings['url_v1'];
+        $base_url_live = $settings['url_live'];
+        $connected = $settings['connected'];
+        $test_mode = $settings['test_mode'];
+        $payment_hours = $settings['payment_hours'];
+        $email = $settings['email'];
 
-        $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3);
-        $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1);
-        $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE);
-        $email = get_option(AleConfiguration::$EMAIL);
-        $connected = get_option(AleConfiguration::$CONNECTED);
-        $test_mode = get_option(AleConfiguration::$TEST_MODE);
+
+        $test_mode = $test_mode == 'yes' ? true: false;
 
         $this->settings = (object)array_merge(
             array(
@@ -76,12 +122,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'use_label' => true,
                 'use_icon' => true,
                 'use_desc' => true,
-                'sandbox' => !empty($test_mode),
+                'sandbox' => $test_mode,
                 'force_ssl' => false,
                 'debug' => false,
-                'test_mode' => !empty($test_mode),
-                // 'alepay_checkout_enabled' => $model->get_checkout_enabled(),
-                'connect_status' => !empty($connected),
+                'test_mode' => $test_mode,
+                'payment_hours' => $payment_hours,
+                'connect_status' => $connected,
                 'email' => $email,
                 'encrypt_key' => $encrypt_key,
                 'api_key' => $api_key,
@@ -361,16 +407,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $sub->created_at = gmdate('c');
         $sub->store();
 
-        /**
-        // If trial amount is zero then we've got to make sure the confirmation txn lasts through the trial
-        if ($sub->trial && $sub->trial_amount <= 0.00) {
-            $expires_at = MeprUtils::ts_to_mysql_date(time() + MeprUtils::days($sub->trial_days), 'Y-m-d 23:59:59');
-        } elseif (!$mepr_options->disable_grace_init_days && $mepr_options->grace_init_days > 0) {
-            $expires_at = MeprUtils::ts_to_mysql_date(time() + MeprUtils::days($mepr_options->grace_init_days), 'Y-m-d 23:59:59');
-        } else {
-            $expires_at = $txn->created_at; // Expire immediately
-        }
-        */
 
         $txn->trans_num = $sub->subscr_id;
         $txn->status = MeprTransaction::$complete_str;
@@ -419,16 +455,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             MeprUtils::send_new_sub_notices($sub);
             $sub->store();
         }
-
-        // $tmp_txn = new MeprTransaction();
-        // $tmp_txn->product_id = $prd->ID;
-        // $tmp_txn->user_id = $usr->ID;
-
-        // if ($sub->trial) {
-        //     $tmp_txn->set_subtotal($sub->trial_amount);
-        // } else {
-        //     $tmp_txn->set_subtotal($sub->total);
-        // }
 
         $amount = $sub->trial ? $sub->trial_amount : $sub->total;
 
@@ -493,6 +519,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         MeprUtils::wp_redirect($checkout_url);
     }
 
+    
+
     public function process_one_time_international($txn, $data, $usr)
     {
         unset($data['allowDomestic']);
@@ -501,7 +529,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['merchantSideUserId'] = strval($usr->ID);
         $data['buyerPostalCode'] = trim($_REQUEST['mepr-buyer-postal-code']);
         $data['buyerState'] = trim($_REQUEST['mepr-buyer-state']);
-        $data['paymentHours'] = '1';
+        $data['paymentHours'] = $this->settings['payment_hours'];
         $data['checkoutType'] = intval(1);
         $data['returnUrl'] = $data['returnUrl'] . '&onetimeInternationalResult=1';
 
@@ -1101,7 +1129,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         error_log(__METHOD__);
         $data = isset($_REQUEST['data']) ? $_REQUEST['data'] : null;
         if (isset($data)) {
-            error_log(print_r($data, true));
             $result = $this->alepayAPI->decryptCallbackData($data);
             $tokenization_payment = json_decode($result, true);
             if ($tokenization_payment['errorCode'] == '000') {
@@ -1872,7 +1899,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function initialize_payment_api()
     {
         if (!isset($this->alepayAPI)) {
-
+            error_log(__METHOD__);
+            
             $args = [
                 'apiKey' => $this->settings->api_key,
                 'encryptKey' => $this->settings->encrypt_key,
@@ -1881,6 +1909,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'is_test_mode' => $this->settings->test_mode,
                 'callbackUrl' => 'callbackUrl',
             ];
+            error_log(print_r($args,true)); 
             $this->alepayAPI = new Alepay($args);
         }
     }
