@@ -23,7 +23,6 @@ class AlepayWebhookHandler
 
     public function __construct()
     {
-        error_log(__METHOD__);
         $settings = udoo_get_settings();
         $encrypt_key = $settings['encrypt'];
         $api_key = $settings['api'];
@@ -105,8 +104,7 @@ class AlepayWebhookHandler
     {
         $request_data = json_decode($request->get_body());
 
-        error_log('WEBHOOKS');
-        error_log(print_r($request_data, true));
+        error_log(__METHOD__);
 
         $webhook_event = $request_data->event;
         $webhook_type = $request_data->type;
@@ -137,17 +135,9 @@ class AlepayWebhookHandler
             'cancelUrl' => $cancelUrl,
             'paymentHours' => $paymentHours
         ];
-
-        //        error_log('Prepared data');
-        //        error_log(print_r($data, true));
-        //
-        //        error_log('Webhook data');
-        //        error_log(print_r($request_data, true));
-
         $result = $this->alepayAPI->sendTokenizationPayment($data);
 
         if (is_object($result)) {
-            error_log('result' . print_r($result, true));
             if (!$this->args['connected']) {
                 $checkout_url = $result->checkoutUrl;
                 $message = get_option(AleConfiguration::$CHECKOUT_MESSAGE);
@@ -155,7 +145,6 @@ class AlepayWebhookHandler
                 wp_mail($request_data->data->member->email, $message);
             }
         } else {
-            error_log('MeprGatewayException');
             throw new MeprGatewayException($result['errorDescription']);
         }
 
@@ -164,9 +153,7 @@ class AlepayWebhookHandler
 
     public function handle_reactive_subscription_success(WP_REST_Request $request)
     {
-        error_log('Success');
-        error_log(print_r($request->get_params(), true));
-
+        error_log(__METHOD__);
         $comming_data = $request->get_params();
 
         $encrypted_data = $comming_data['data'];
@@ -184,7 +171,6 @@ class AlepayWebhookHandler
         $decrypted_data = json_decode($decrypted_data);
 
         if ($decrypted_data->errorCode != '000') {
-            error_log(print_r($decrypted_data, true));
             return [
                 'status' => 500,
                 'message' => 'Error! Try again later',
@@ -238,8 +224,7 @@ class AlepayWebhookHandler
 
     public function handle_reactive_subscription_failure(WP_REST_Request $request)
     {
-        error_log('Failure');
-        error_log(print_r($request->get_params(), true));
+        error_log(__METHOD__);
 
         $comming_data = $request->get_params();
 

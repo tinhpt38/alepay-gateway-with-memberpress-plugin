@@ -49,31 +49,26 @@ class Alepay {
         // set KEY
         if (isset($opts) && !empty($opts["apiKey"])) {
             $this->apiKey = $opts["apiKey"];
-            error_log('apiKey :'. $this->apiKey);
         } else {
             throw new \Exception("API key is required !");
         }
         if (isset($opts) && !empty($opts["encryptKey"])) {
             $this->encryptKey = $opts["encryptKey"];
-            error_log('encryptKey :'. $this->encryptKey);
         } else {
             throw new \Exception("Encrypt key is required !");
         }
         if (isset($opts) && !empty($opts["checksumKey"])) {
             $this->checksumKey = $opts["checksumKey"];
-            error_log('checksumKey :'. $this->checksumKey);
         } else {
             throw new \Exception("Checksum key is required !");
         }
         if (isset($opts) && !empty($opts["callbackUrl"])) {
             $this->callbackUrl = $opts["callbackUrl"];
-            error_log('callbackUrl :'. $this->callbackUrl);
         }
 
         if (isset($opts) && !empty($opts["is_test_mode"])) {
             $this->isTestMode = $opts["is_test_mode"];
             $this->isTestMode = $this->isTestMode == 'checked';
-            error_log('isTestMode :'. $this->isTestMode);
         }else{
 
         }
@@ -82,7 +77,6 @@ class Alepay {
 
         if (isset($opts) && !empty($opts["base_urls"])) {
             $this->baseURL = $opts["base_urls"];
-            error_log('baseURL :'. $this->baseURL);
         }
 
         if ($this->isTestMode) {
@@ -90,19 +84,15 @@ class Alepay {
         } else {
             $this->env = 'live';
         }
-        error_log('ENV:'.$this->env);
-        
 
         $this->alepayUtils = new \AlepayUtils();
     }
 
     public function getCustomerInfo($data){
-        error_log(__METHOD__);
         $url = $this->baseURL[$this->env] . $this->URI['customerInfo'];
         if ($this->env == 'sanbox') {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['customerInfo'];
         }
-        error_log('url .'. $url);
         $result = $this->sendRequestToAlepay($data, $url);
         return $result;
     }
@@ -140,8 +130,6 @@ class Alepay {
     private function sendRequestToAlepayV3($data, $url)
     {
         error_log(__METHOD__);
-        error_log(print_r($url, true));
-        error_log(print_r($data, true));
         $data_string = json_encode($data);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -153,13 +141,7 @@ class Alepay {
             'Content-Length: ' . strlen($data_string)
         ));
         $result = curl_exec($ch);
-        if (!$result) {
-            error_log('Connection Failure');
-        } else {
-            error_log('Connection Successful');
-        }
         curl_close($ch);
-        error_log('before return result '. print_r($result,true));
         return json_decode($result);
     }
 
@@ -170,8 +152,6 @@ class Alepay {
         if ($this->env == 'sanbox') {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['requestOrder'];
         }
-        error_log('requestOrder ' . $url);
-        error_log(print_r($data,true));
         $result = $this->sendRequestToAlepay($data, $url);
         if ($result->errorCode == '000') {
             $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
@@ -248,7 +228,6 @@ class Alepay {
         if ($this->env == 'sanbox') {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['tokenizationPayment'];
         }
-        error_log('tokenizationPayment URL '.$url);
         $result = $this->sendRequestToAlepay($data, $url);
         if ($result->errorCode == '000') {
             $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
@@ -286,8 +265,6 @@ class Alepay {
 
     private function sendRequestToAlepay($data, $url) {
         error_log(__METHOD__);
-        error_log('before encrypt ' . print_r(json_encode($data),true));
-        error_log(print_r($data, true));
         $dataEncrypt = $this->alepayUtils->encryptData(json_encode($data), $this->encryptKey);
         $checksum = md5($dataEncrypt . $this->checksumKey);
         $items = array(
@@ -295,7 +272,6 @@ class Alepay {
             'data' => $dataEncrypt,
             'checksum' => $checksum
         );
-        error_log(print_r($items,true));
         $data_string = json_encode($items);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
@@ -320,7 +296,6 @@ class Alepay {
     }
 
     public function decryptCallbackData($data) {
-        error_log(__METHOD__);
         return $this->alepayUtils->decryptCallbackData($data, $this->encryptKey);
     }
 

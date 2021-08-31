@@ -51,7 +51,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $this->set_defaults();
     }
 
-    
+
 
     protected function set_defaults()
     {
@@ -73,7 +73,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $email = $settings['email'];
 
 
-        $test_mode = $test_mode == 'checked' ? true: false;
+        $test_mode = $test_mode == 'checked' ? true : false;
 
         $this->settings = (object)array_merge(
             array(
@@ -130,7 +130,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     public function process_payment_form($txn)
     {
-        error_log('process_payment_form');
         parent::process_payment_form($txn);
     }
 
@@ -143,9 +142,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     public function process_payment($txn)
     {
         error_log(__METHOD__);
-
         if (!isset($txn) || !($txn instanceof MeprTransaction)) {
-            error_log('Invalid transaction');
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
 
@@ -217,7 +214,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_subscription_payment()
     {
-        error_log('record_subscription_payment');
         return false;
     }
 
@@ -232,8 +228,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_subscription_free_invoice_payment()
     {
-        error_log('record_subscription_free_invoice_payment');
-
         return false;
     }
 
@@ -241,7 +235,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Used to record a declined payment. */
     public function record_payment_failure()
     {
-        error_log('record_payment_failure');
         return false;
     }
 
@@ -252,7 +245,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_payment($charge = null)
     {
-        error_log('record_payment');
         $this->email_status("Starting record_payment: " . MeprUtils::object_to_string($_REQUEST), $this->settings->debug);
 
         if (empty($charge)) {
@@ -303,7 +295,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             }
         }
 
-        error_log('Recort_payment');
         return false;
     }
 
@@ -374,7 +365,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $txn->txn_type = MeprTransaction::$payment_str;
         // $txn->expires_at = $expires_at;
         // $txn->set_subtotal(0.0);
-        error_log('Mepre Transaction Store ' . print_r($txn, true));
         $txn->store();
 
         // TODO: Check it out and uncomment later
@@ -392,7 +382,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         error_log(__METHOD__);
 
         if (!isset($txn) || !($txn instanceof MeprTransaction)) {
-            error_log('error not meprtrasaction');
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
 
@@ -400,7 +389,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $prd = $txn->product();
 
         $sub = $txn->subscription();
-    
+
 
         update_user_meta($usr->ID, 'first_name', trim($_REQUEST['mepr-buyer-first-name']));
         update_user_meta($usr->ID, 'last_name', trim($_REQUEST['mepr-buyer-last-name']));
@@ -467,12 +456,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
 
         if ($result->code != '000') {
-            error_log('Send request order to alepay one time domestic ATM failed');
-            error_log(print_r($result, true));
             throw new MeprGatewayException(__($result->message, 'memberpress'));
         }
-
-        error_log('Send request order to alepay one time domestic ATM succeeded');
 
         $checkout_url = $result->checkoutUrl;
         $this->email_status("process_domestic_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
@@ -480,7 +465,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         MeprUtils::wp_redirect($checkout_url);
     }
 
-    
+
 
     public function process_one_time_international($txn, $data, $usr)
     {
@@ -506,13 +491,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $result = $this->alepayAPI->sendRequestOrderInternational($data);
         if (!is_object($result)) {
-            error_log('Send request order one time international failed');
-            error_log(print_r($result, true));
             throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
         }
-
-        error_log('Send request order one time international succeeded');
-        error_log(print_r($result, true));
 
         $checkout_url = $result->checkoutUrl;
         $this->email_status("process_international_payment: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
@@ -552,13 +532,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $result = $this->alepayAPI->sendRequestOrderInternational($data);
         if (!is_object($result)) {
-            error_log('Send request order international failed');
-            error_log(print_r($result, true));
             throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
         }
-
-        error_log('Send request order international succeeded');
-        error_log(print_r($result, true));
 
         $checkout_url = $result->checkoutUrl;
         $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
@@ -571,14 +546,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['returnUrl'] = $data['returnUrl'] . '&domesticResult=1';
         $this->initialize_payment_api();
         $result = $this->alepayAPI->sendOrderToAlepayDomesticATM($data);
-        error_log(print_r($result, true));
         if ($result->code != '000') {
-            error_log('Send request order to alepay domestic ATM failed');
-            error_log(print_r($result, true));
             throw new MeprGatewayException(__($result->message, 'memberpress'));
         }
-
-        error_log('Send request order to alepay domestic ATM succeeded');
 
         $checkout_url = $result->checkoutUrl;
         $this->email_status("process_create_subscription: \n" . MeprUtils::object_to_string($txn) . "\n", $this->settings->debug);
@@ -591,7 +561,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $usr = $txn->user();
             $prd = $txn->product();
         } else {
-            error_log('error not meprtrasaction');
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         }
         // $sub = $txn->subscription();
@@ -632,7 +601,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         if (isset($_REQUEST['data'])) {
             $customer = (object)$_REQUEST['data'];
-            error_log(print_r($customer, true));
             $subscription = isset($_REQUEST['subscription']) ? (object)$_REQUEST['subscription'] : null;
             $sub = isset($subscription, $subscription->id) ? MeprSubscription::get_one_by_subscr_id($subscription->id) : null;
             if (!($sub instanceof MeprSubscription)) {
@@ -672,19 +640,18 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 }
 
                 MeprUtils::send_signup_notices($txn);
-                error_log('in here' . print_r($txn, true));
                 return array('subscription' => $sub, 'transaction' => $txn);
             }
         }
-        error_log('in here return false');
         return false;
     }
 
     public function process_update_subscription($sub_id)
     {
+        error_log(__METHOD__);
         // This is handled via Ajax
         $sub = new MeprSubscription($sub_id);
-        error_log(print_r($sub, true));
+
 
         $userID = $sub->user_id;
 
@@ -754,8 +721,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
             $result = $this->alepayAPI->sendRequestOrderInternational($data);
             if (!is_object($result)) {
-                error_log('Send request order international failed');
-                error_log(print_r($result, true));
                 throw new MeprGatewayException(__($result->errorDescription, 'memberpress'));
             };
 
@@ -768,10 +733,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         } else {
             throw new MeprGatewayException(__('Invalid payment type', 'memberpress'));
         }
-      
     }
 
-    public function process_update_onclickpayment($userID){
+    public function process_update_onclickpayment($userID)
+    {
         $data['id'] = $userID;
         $data['firstName'] = trim($_REQUEST['mepr-buyer-first-name']);
         $data['lastName'] = trim($_REQUEST['mepr-buyer-last-name']);
@@ -813,15 +778,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         //Todo: Send email cho khach hanfg
         $mepr_options = MeprOptions::fetch();
         $sub = new MeprSubscription($sub_id);
-        error_log($sub->status);
 
         if ($sub->status == MeprSubscription::$suspended_str) {
-            error_log('This subscription has already been paused.');
             throw new MeprGatewayException(__('This subscription has already been paused.', 'memberpress'));
         }
 
         if (!MeprUtils::is_mepr_admin() && $sub->in_free_trial()) {
-            error_log('Sorry, subscriptions cannot be paused during a free trial.');
             throw new MeprGatewayException(__('Sorry, subscriptions cannot be paused during a free trial.', 'memberpress'));
         }
 
@@ -837,13 +799,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_suspend_subscription()
     {
-        error_log(__METHOD__);
         if (isset($_REQUEST['data'])) {
             $sub = (object)$_REQUEST['data'];
-            error_log('sub is instance of MeprSubscription');
             // Seriously ... if sub was already cancelled what are we doing here?
             if ($sub->status == MeprSubscription::$suspended_str) {
-                error_log('return sub here');
                 return $sub;
             }
 
@@ -867,7 +826,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             throw new MeprGatewayException(__('This subscription has already been resumed.', 'memberpress'));
         }
 
-        error_log('before if is expired');
         if ($sub->is_expired() and !$sub->is_lifetime()) {
             $expiring_txn = $sub->expiring_txn();
 
@@ -880,23 +838,17 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $sub->trial = false;
                 $sub->trial_days = 0;
                 $sub->trial_amount = 0.00;
-                error_log('store 1');
                 $sub->store();
             }
         } else {
             $sub->trial = true;
             $sub->trial_days = MeprUtils::tsdays(strtotime($sub->expires_at) - time());
             $sub->trial_amount = 0.00;
-            error_log('store 2');
             $sub->store();
         }
 
         $customer = $sub->user();
         $prd = $sub->product();
-
-        // $customer_id = $usr->get_stripe_customer_id($this->get_meta_gateway_id());
-        error_log('get customer ' . print_r($customer, true));
-        error_log(print_r($sub, true));
 
         $args = MeprHooks::apply_filters('mepr_alepay_resume_subscription_args', [
             'customer' => $customer->ID,
@@ -920,8 +872,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         if ($sub->trial) {
             $args = array_merge(['trial_period_days' => $sub->trial_days], $args);
         }
-
-        error_log('before store and send email');
         $sub->store();
         $this->email_status("process_resume_subscription: \n" . MeprUtils::object_to_string($sub) . "\n", $this->settings->debug);
 
@@ -936,14 +886,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function record_resume_subscription()
     {
-        error_log(__METHOD__);
         if (isset($_REQUEST['data'], $_REQUEST['sub'])) {
             $customer = (object)$_REQUEST['data'];
 
             $sub = $_REQUEST['sub'];
-
-            error_log('sub' . print_r($sub, true));
-            error_log('customer' . print_r($customer, true));
             if ($sub instanceof MeprSubscription) {
                 $sub->status = MeprSubscription::$active_str;
                 $sub->store();
@@ -964,7 +910,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 return array('subscription' => $sub, 'transaction' => (isset($txn)) ? $txn : $prior_txn);
             }
         }
-        error_log('return false');
         return false;
     }
 
@@ -976,7 +921,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     {
         error_log(__METHOD__);
         $sub = new MeprSubscription($sub_id);
-        error_log(print_r($sub, true));
         if ($sub->status == MeprSubscription::$cancelled_str || $sub->status == MeprSubscription::$suspended_str) {
             throw new MeprGatewayException(__('This subscription has already been cancelled.', 'memberpress'));
         }
@@ -996,14 +940,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         if (isset($_REQUEST['data'])) {
             $subscription = (object)$_REQUEST['data'];
             $sub = MeprSubscription::get_one_by_subscr_id($subscription->id);
-            // error_log('set status to cancelled_str' . print_r($sub,true));
             $subscription->status = MeprSubscription::$cancelled_str;
-            error_log('view status' . $subscription->status);
             $subscription->store();
-            error_log('send_cancelled_sub_notices');
             MeprUtils::send_cancelled_sub_notices($subscription);
         }
-        error_log('return false');
+
         return false;
     }
 
@@ -1013,11 +954,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
      */
     public function process_signup_form($txn)
     {
+        error_log(__METHOD__);
         if ($txn->amount <= 0.00) {
             MeprTransaction::create_free_transaction($txn);
             return;
         }
-        error_log(__METHOD__);
+
         return false;
     }
 
@@ -1047,16 +989,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         error_log(__METHOD__);
         $data = isset($_REQUEST['data']) ? $_REQUEST['data'] : null;
         if (isset($data)) {
-            error_log(print_r($data, true));
             $result = $this->alepayAPI->decryptCallbackData($data);
             $tokenization_payment = json_decode($result, true);
             if ($tokenization_payment['errorCode'] == '000') {
                 if ($tokenization_payment['cancel'] == true) {
-                    //Người dùng huỷ liên hết thẻ
-                    error_log('nguowif dunfg huy lien ket the');
+                    return false;
                 } else {
-                    error_log('Nguoi dung lien ket thanh cong ' . print_r($tokenization_payment, true));
-                    //Người dùng liên kết thẻ thành công
                     $card_link_status = $tokenization_payment['data']['data']['cardLinkStatus'];
                     $email = $tokenization_payment['data']['email'];
                     $customer_id = $tokenization_payment['data']['customerId'];
@@ -1095,11 +1033,8 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $tokenization_payment = json_decode($result, true);
             if ($tokenization_payment['errorCode'] == '000') {
                 if ($tokenization_payment['cancel'] == true) {
-                    //Người dùng huỷ liên hết thẻ
-                    error_log('nguowif dunfg huy lien ket the');
+                    return false;
                 } else {
-                    error_log('Nguoi dung lien ket thanh cong ' . print_r($tokenization_payment, true));
-                    //Người dùng liên kết thẻ thành công
                     $card_link_status = $tokenization_payment['data']['data']['cardLinkStatus'];
                     $email = $tokenization_payment['data']['email'];
                     $customer_id = $tokenization_payment['data']['customerId'];
@@ -1145,16 +1080,12 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data_forpayment['cancelUrl'] = $raw->cancelUrl . '&oneClickCancel=1';
         $data_forpayment['paymentHours'] = '1';
         $this->initialize_payment_api();
-        error_log('before sent' . print_r($data_forpayment, true));
         $result = $this->alepayAPI->sendTokenizationPayment($data_forpayment);
         if (is_object($result)) {
-            error_log('result' . print_r($result, true));
             $token = $result->token;
             $checkout_url = $result->checkoutUrl;
-            error_log('checkout url' . $result->checkoutUrl);
             MeprUtils::wp_redirect($checkout_url);
         } else {
-            error_log('MeprGatewayException');
             throw new MeprGatewayException($result['errorDescription']);
         }
     }
@@ -1165,7 +1096,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data = isset($_REQUEST['data']) ? $_REQUEST['data'] : null;
 
         if (isset($data)) {
-            error_log(print_r($data, true));
             $this->initialize_payment_api();
             $result = $this->alepayAPI->decryptCallbackData($data);
             $data = json_decode($result, true);
@@ -1178,7 +1108,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     public function handle_one_click_success($txn_id)
     {
-        error_log('txn_id ' . $txn_id);
 
         $result = $this->request_one_click_success($txn_id);
 
@@ -1213,8 +1142,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         $sub->add_meta('payment_method', 'one_click_payment');
                         $this->activate_subscription($txn, $sub);
 
-                        error_log('dispay thank you form');
-
                         $mepr_options = MeprOptions::fetch();
 
 
@@ -1227,45 +1154,32 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                             $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
                         }
 
-                        error_log('sent query ' . print_r($query_params, true));
-
                         // Redirect to thank you page
                         MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
                     } else {
                         // TODO: Transaction created failed
-                        error_log('Transaction created failed');
+                        return;
                     }
                 } else {
                     // User cancel
-                    error_log('result FAILED');
-
-                    // Result object
-                    error_log(print_r($result, true));
-
                     $txn = new MeprTransaction($txn_id);
                     MeprUtils::send_failed_txn_notices($txn);
                     echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-                    echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+                    echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
                     return;
                 }
             } else {
-                error_log('result FAILED');
-
-                // Error
-                error_log(print_r($result, true));
-
                 $txn = new MeprTransaction($txn_id);
                 MeprUtils::send_failed_txn_notices($txn);
                 echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-                echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+                echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
                 return;
             }
         } else {
-            error_log('result FAILED');
             $txn = new MeprTransaction($txn_id);
             MeprUtils::send_failed_txn_notices($txn);
             echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-            echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+            echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
             return;
         }
     }
@@ -1275,8 +1189,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $txn = new MeprTransaction($txn_id);
         MeprUtils::send_failed_txn_notices($txn);
         echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-        echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
-
+        echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
         exit;
     }
 
@@ -1306,7 +1219,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $alepay_transaction_code = $decryptedData->data->transactionCode;
                 $card_link_code = $decryptedData->data->cardLinkCode;
                 $sub->add_meta('payment_method', 'international');
-                
+
                 $sub->token = $alepay_token;
             }
         }
@@ -1328,7 +1241,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         // Record transaction
         $_REQUEST['data'] = $transaction_info;
-        error_log(print_r($transaction_info));
         $transaction = $this->record_create_subscription();
 
         if (!gettype($transaction) == 'array') {
@@ -1338,11 +1250,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
         $this->activate_subscription($txn, $sub);
 
-        error_log('dispay update form');
-
         $mepr_options = MeprOptions::fetch();
-
-        error_log('dispay update form');
 
         $product = new MeprProduct($txn->product_id);
         $sanitized_title = sanitize_title($product->post_title);
@@ -1352,9 +1260,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $sub = $txn->subscription();
             $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
         }
-
-        error_log('sent query ' . print_r($query_params, true));
-
         // Redirect to thank you page
         MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
     }
@@ -1377,15 +1282,11 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     public function handle_recurring_onetime_domestic($txn_id)
     {
-        error_log('Save successful onetime domestic payment: Transaction ID ' . $txn_id);
-
+        error_log(__METHOD__);
         // Store transaction
         $transaction = new MeprTransaction($txn_id);
         $transaction->status = MeprTransaction::$complete_str;
         $transaction->store();
-
-        // Send email
-
         // Redirect to thank you page
         $mepr_options = MeprOptions::fetch();
 
@@ -1399,9 +1300,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
 
     public function handle_recurring_onetime_international($txn_id)
     {
-        error_log('Save successful onetime international payment: Transaction ID ' . $txn_id);
-
-        // Store transaction
         $transaction = new MeprTransaction($txn_id);
         $transaction->store();
 
@@ -1438,9 +1336,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 $txn = new MeprTransaction($txn_id);
                 $sub = $txn->subscription();
                 $this->activate_subscription($txn, $sub);
-                error_log('dispay update form');
                 $mepr_options = MeprOptions::fetch();
-                error_log('dispay update form');
                 $product = new MeprProduct($txn->product_id);
                 $sanitized_title = sanitize_title($product->post_title);
 
@@ -1449,7 +1345,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     $sub = $txn->subscription();
                     $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
                 }
-                error_log('sent query ' . print_r($query_params, true));
                 MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
             }
         }
@@ -1619,17 +1514,15 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
 
         if (isset($go_back)) {
-            error_log("user cancel");
             $txn = new MeprTransaction($txn_id);
             MeprUtils::send_failed_txn_notices($txn);
             echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-            echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+            echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
         } else if ($error_code != '000') {
             $this->render_payment_form($amount, $user, $product_id, $txn_id);
         } else if (!$cancel) {
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         } else {
-            error_log('before get transaction transaction code ' . $transaction_code);
             $this->handle_domestic($token_key, $transaction_code, $txn_id);
         }
     }
@@ -1645,11 +1538,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Displays the form for the given payment gateway on the MemberPress Options page */
     public function display_options_form()
     {
-        $url = admin_url() . '&page=alepay-setting';
-    ?>
-        <a href="<?php echo $url; ?>"> <strong> Configuration </strong></a>
-
-    <?php
+        // nothing in here
     }
 
     /** Validates the form for the given payment gateway on the MemberPress Options page */
@@ -1671,7 +1560,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     {
         error_log(__METHOD__);
         $payment_method = $sub->get_meta('payment_method', true);
-        error_log($payment_method);
     ?>
         <div class="mp_wrapper">
             <form action="" method="post" id="mepr-alepay-payment-form" data-sub-id="<?php echo esc_attr($sub->id); ?>">
@@ -1773,11 +1661,10 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $cancel = isset($_REQUEST['cancel']) ? $_REQUEST['cancel'] : null;
 
         if (isset($domestic_result_cancel)) {
-            error_log("user cancel");
             $txn = new MeprTransaction($txn_id);
             MeprUtils::send_failed_txn_notices($txn);
             echo '<h1>' . __('Payment was unsuccessful, please check your payment details and try again.', 'memberpress') . '</h1>';
-            echo '<a href="<?php echo get_site_url(); ?>">' . __('Go home') . '</a>';
+            echo '<a> href = "' . get_site_url() . '" ' . __('Go home') . '</a>';
         } else if ($error_code != '000') {
             $mepr_options = MeprOptions::fetch();
             $sub = new MeprSubscription($sub_id);
@@ -1786,7 +1673,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         } else if (!$cancel) {
             throw new MeprGatewayException(__('Payment was unsuccessful, please check your payment details and try again.', 'memberpress'));
         } else {
-            error_log('before get transaction transaction code ' . $transaction_code);
+
             $data['tokenKey'] = $token_key;
             $data['transactionCode'] = $transaction_code;
             $this->initialize_payment_api();
@@ -1805,9 +1692,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                     $sub = $txn->subscription();
                     $sub->add_meta('payment_method', 'domistic');
                     $this->activate_subscription($txn, $sub);
-                    error_log('dispay update form');
                     $mepr_options = MeprOptions::fetch();
-                    error_log('dispay update form');
                     $product = new MeprProduct($txn->product_id);
                     $sanitized_title = sanitize_title($product->post_title);
                     $query_params = array('membership' => $sanitized_title, 'trans_num' => $txn->trans_num, 'membership_id' => $product->ID);
@@ -1815,7 +1700,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                         $sub = $txn->subscription();
                         $query_params = array_merge($query_params, array('subscr_id' => $sub->subscr_id));
                     }
-                    error_log('sent query ' . print_r($query_params, true));
                     MeprUtils::wp_redirect($mepr_options->thankyou_page_url(build_query($query_params)));
                 }
             }
@@ -1837,11 +1721,9 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         error_log(__METHOD__);
         $sub = new MeprSubscription($sub_id);
         $user = $sub->user();
-        error_log(print_r($user, true));
         $txn = new MeprTransaction();
         $txn->subscription_id = $sub_id;
         $txn->user_id = $user->ID;
-        error_log(print_r($txn, true));
         // $this->process_create_subscription($txn);
         $this->process_update_subscription($sub_id);
     }
@@ -1849,7 +1731,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Returns boolean ... whether or not we should be sending in test mode or not */
     public function is_test_mode()
     {
-        
+
         return (isset($this->settings->test_mode) && $this->settings->test_mode);
     }
 
@@ -1862,7 +1744,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     {
         if (!isset($this->alepayAPI)) {
             error_log(__METHOD__);
-            
+
             $args = [
                 'apiKey' => $this->settings->api_key,
                 'encryptKey' => $this->settings->encrypt_key,
@@ -1871,7 +1753,6 @@ class MeprAlepayGateway extends MeprBaseRealGateway
                 'is_test_mode' => $this->settings->test_mode,
                 'callbackUrl' => 'callbackUrl',
             ];
-            error_log(print_r($args,true)); 
             $this->alepayAPI = new Alepay($args);
         }
     }

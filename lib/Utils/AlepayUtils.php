@@ -5,11 +5,9 @@ include(ROOT_PATH . DS . 'Crypt/RSA.php');
 class AlepayUtils {
 
     function encryptData($data, $publicKey) {
-        error_log(__METHOD__);
         $rsa = new Crypt_RSA();
         $rsa->loadKey($publicKey); // public key
         $rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);
-        error_log('data'.print_r($data,true));
         $output = $rsa->encrypt($data);
         return base64_encode($output);
     }
@@ -33,7 +31,6 @@ class AlepayUtils {
 
     function makeSignature($data, $hash_key)
     {
-        error_log(__METHOD__);
         $hash_data = '';
         ksort($data);
         $is_first_key = true;

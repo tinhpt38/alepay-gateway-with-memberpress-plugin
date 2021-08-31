@@ -6,7 +6,7 @@
  * Description:       Integrated with MemberPress
  * Author:            Udoo
  * Author URI:        https://udoo.ooo
- * Version:           2.0.4
+ * Version:           2.0.5
  * Text Domain:       alepay-gateway
  * Domain Path:       /languages
  */
@@ -115,13 +115,10 @@ function udoo_get_settings()
     );
 }
 
-
 function config_render()
 {
     error_log(__METHOD__);
-
     $settings = udoo_get_settings();
-    error_log(print_r($settings,true));
 
 ?>
 
@@ -181,9 +178,8 @@ function config_render()
             <h3>Message</h3>
             <div class="item">
                 <label for="checkout_message">Email comfirm checkout</label>
-                <?php
-                if (empty($settings['checkout_message'])) {
-                    $chekout_message = 'Một giao dịch từ $site cần bạn xác nhận. Mã giao giao dịch là $sub_id. Bạn vui lòng truy cập đường dẫn sau để xác nhận giao dịch $url.';
+                <?php                if (empty($settings['checkout_message'])) {
+                    $checkout_message = 'Một giao dịch từ $site cần bạn xác nhận. Mã giao giao dịch là $sub_id. Bạn vui lòng truy cập đường dẫn sau để xác nhận giao dịch $url.';
                 } else {
                     $checkout_message = $settings['checkout_message'];
                 }
