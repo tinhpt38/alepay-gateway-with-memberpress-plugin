@@ -14,6 +14,7 @@ class AlepayUtils {
         return base64_encode($output);
     }
 
+
     function decryptData($data, $publicKey) {
         $rsa = new Crypt_RSA();
         $rsa->setEncryptionMode(CRYPT_RSA_ENCRYPTION_PKCS1);

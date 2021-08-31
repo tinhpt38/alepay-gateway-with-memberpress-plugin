@@ -6,7 +6,7 @@
  * Description:       Integrated with MemberPress
  * Author:            Udoo
  * Author URI:        https://udoo.ooo
- * Version:           2.0.1
+ * Version:           2.0.4
  * Text Domain:       alepay-gateway
  * Domain Path:       /languages
  */
@@ -14,6 +14,8 @@
 require_once __DIR__ . '/utils/AleConfiguration.php';
 require_once __DIR__ . '/gateways/AlepayWebhookHandler.php';
 require_once __DIR__ . '/utils/WPConfigTransformer.php';
+
+require_once __DIR__ . '/UdooSecuri.php';
 
 /**
  * Add custom AJAX for webhook
@@ -80,15 +82,11 @@ function ale_config_menu()
 function udoo_get_settings()
 {
 
-    // $securi = \Alepay\UdooSecuri::get_security();
-    // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
-    // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
-    // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
+    $securi = UdooSecuri::get_key();
+    $encrypt_key = UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY,$securi);
+    $api_key = UdooSecuri::get_option(AleConfiguration::$API_KEY, $securi);
+    $checksum_key = UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY,$securi);
 
-    $securi = get_option(AleConfiguration::$SECURI,'');
-    $encrypt_key = '';
-    $api_key = '';
-    $checksum_key = '';
     $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
     $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
     $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
@@ -98,11 +96,8 @@ function udoo_get_settings()
     $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
     $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
     $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
-
     $connected = $connected == 'yes' ? 'checked' : '';
     $test_mode = $test_mode == 'yes' ? 'checked' : '';
-
-
     return array(
         'securi' => $securi,
         'encrypt' => $encrypt_key,
@@ -301,23 +296,23 @@ function config_render()
             update_option(AleConfiguration::$SECURI, $securi);
         }
 
-        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY))){
-        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$API_KEY, $api_key, 'yes', $securi);
-        // }else{
-        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$API_KEY, $api_key,'yes', $securi);
-        // }
+        if(!UdooSecuri::get_option(AleConfiguration::$API_KEY,$securi)){
+            UdooSecuri::add_option(AleConfiguration::$API_KEY, $api_key,$securi);
+        }else{
+            UdooSecuri::update_option(AleConfiguration::$API_KEY, $api_key,$securi);
+        }
 
-        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY))){
-        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,'yes',$securi);
-        // }else{
-        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,'yes',$securi);
-        // }
+        if(!UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY,$securi)){
+            UdooSecuri::add_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,$securi);
+        }else{
+            UdooSecuri::update_option(AleConfiguration::$ENCRYPT_KEY, $encrypt_key,$securi);
+        }
 
-        // if(empty(\Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY))){
-        //     \Alepay\UdooSecuri::add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key,'yes',$securi);
-        // }else{
-        //     \Alepay\UdooSecuri::update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key, 'yes',$securi);
-        // }
+        if(!UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY, $securi)){
+            UdooSecuri::add_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key,$securi);
+        }else{
+            UdooSecuri::update_option(AleConfiguration::$CHECKSUM_KEY, $checksum_key, $securi);
+        }
 
         //endregion -- save options
     }

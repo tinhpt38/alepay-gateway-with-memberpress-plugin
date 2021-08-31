@@ -4,6 +4,8 @@ error_reporting(0);
 
 require_once __DIR__ . '../../lib/Alepay.php';
 require_once __DIR__ . '../../utils/AleConfiguration.php';
+require_once __DIR__ . '../../plugins.php';
+
 
 if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
@@ -49,48 +51,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $this->set_defaults();
     }
 
-    function udoo_get_settings()
-    {
     
-        // $securi = \Alepay\UdooSecuri::get_security();
-        // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
-        // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
-        // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
-    
-        $securi = get_option(AleConfiguration::$SECURI,'');
-        $encrypt_key = '';
-        $api_key = '';
-        $checksum_key = '';
-        $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
-        $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
-        $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
-        $email = get_option(AleConfiguration::$EMAIL,'');
-        $connected = get_option(AleConfiguration::$CONNECTED,'');
-        $test_mode = get_option(AleConfiguration::$TEST_MODE,'');
-        $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
-        $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
-        $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
-    
-        $connected = $connected == 'yes' ? 'checked' : '';
-        $test_mode = $test_mode == 'yes' ? 'checked' : '';
-    
-    
-        return array(
-            'securi' => $securi,
-            'encrypt' => $encrypt_key,
-            'api' => $api_key,
-            'url_live' => $base_url_live,
-            'url_v3' => $base_url_v3,
-            'url_v1' => $base_url_v1,
-            'checksum' => $checksum_key,
-            'email' => $email,
-            'connected' => $connected,
-            'test_mode' => $test_mode,
-            'namespace' => $namespace,
-            'checkout_message' => $chekout_message,
-            'payment_hours' => $payment_hours,
-        );
-    }
 
     protected function set_defaults()
     {
@@ -99,7 +60,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
             $this->settings = array();
         }
 
-        $settings = $this->udoo_get_settings();
+        $settings = udoo_get_settings();
         $encrypt_key = $settings['encrypt'];
         $api_key = $settings['api'];
         $checksum_key = $settings['checksum'];
@@ -112,7 +73,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $email = $settings['email'];
 
 
-        $test_mode = $test_mode == 'yes' ? true: false;
+        $test_mode = $test_mode == 'checked' ? true: false;
 
         $this->settings = (object)array_merge(
             array(
@@ -439,7 +400,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $prd = $txn->product();
 
         $sub = $txn->subscription();
-        $this->initialize_payment_api();
+    
 
         update_user_meta($usr->ID, 'first_name', trim($_REQUEST['mepr-buyer-first-name']));
         update_user_meta($usr->ID, 'last_name', trim($_REQUEST['mepr-buyer-last-name']));
@@ -483,7 +444,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $data['returnUrl'] = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $payment_type = $_REQUEST['alepay_payment_type'];
         set_transient('raw_data', json_encode($data), 60 * 60);
-
+        $this->initialize_payment_api();
         if ($payment_type == 'international' || $payment_type == 'international-none-link') {
             $this->process_internation_payment($txn, $data, $usr, $payment_type);
         } else if ($payment_type == 'domestic') {
@@ -648,6 +609,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
         $callback = $this->get_server_protocol() . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         $data['callback'] = $callback . '&cardLinkRequest=1';
 
+        $this->initialize_payment_api();
         $result = $this->alepayAPI->sendCardLinkRequest($data);
 
         if (isset($result->errCode)) {
@@ -1887,7 +1849,7 @@ class MeprAlepayGateway extends MeprBaseRealGateway
     /** Returns boolean ... whether or not we should be sending in test mode or not */
     public function is_test_mode()
     {
-
+        
         return (isset($this->settings->test_mode) && $this->settings->test_mode);
     }
 

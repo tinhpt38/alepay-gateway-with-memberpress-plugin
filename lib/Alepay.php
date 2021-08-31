@@ -15,13 +15,13 @@ class Alepay {
     protected $checksumKey = "";
     protected $apiKey = "";
     protected $callbackUrl = "";
-    protected $isTestMode = false;
+    protected $isTestMode;
 
     protected $baseURL = array();
 
     protected $env = 'sanbox';
     protected $URI = array(
-        'requestPayment' => '/request-payment',
+        'requestPayment' => '/checkout/request-payment',
         'requestOrder' => '/checkout/v1/request-order',
         'calculateFee' => '/checkout/v1/calculate-fee',
         'getTransactionInfoV1' => '/checkout/v1/get-transaction-info',
@@ -72,10 +72,13 @@ class Alepay {
 
         if (isset($opts) && !empty($opts["is_test_mode"])) {
             $this->isTestMode = $opts["is_test_mode"];
+            $this->isTestMode = $this->isTestMode == 'checked';
             error_log('isTestMode :'. $this->isTestMode);
         }else{
 
         }
+
+        
 
         if (isset($opts) && !empty($opts["base_urls"])) {
             $this->baseURL = $opts["base_urls"];
@@ -104,16 +107,16 @@ class Alepay {
         return $result;
     }
 
-     /**
-     * getListBanksRequest - get bankCode domestic for ATM, Internetbanking, QR code
-     */
-    public function getListBanksRequest($data)
-    {
-        $url = $this->baseURL[$this->env] . $this->URI['getListBanks'];
-        $data['tokenKey'] = $this->apiKey;
-        $resolve = $this->sendRequestToAlepay($data, $url);
-        return $resolve;
-    }
+    //  /**
+    //  * getListBanksRequest - get bankCode domestic for ATM, Internetbanking, QR code
+    //  */
+    // public function getListBanksRequest($data)
+    // {
+    //     $url = $this->baseURL[$this->env] . $this->URI['getListBanks'];
+    //     $data['tokenKey'] = $this->apiKey;
+    //     $resolve = $this->sendRequestToAlepay($data, $url);
+    //     return $resolve;
+    // }
 
     /*
     * sendOrder - Send order information to Alepay service
@@ -178,42 +181,6 @@ class Alepay {
         }
     }
 
-
-    /*
-     * sendOrder - Send order information to Alepay service
-     * @param array|null $data
-     */
-
-    // public function sendOrderToAlepay($data) {
-    //     // get demo data
-    //     // $data = $this->createCheckoutData();
-    //     $data['returnUrl'] = $this->callbackUrl;
-    //     // $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
-    //     $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
-    //     $result = $this->sendRequestToAlepay($data, $url);
-    //     if (isset($result) && $result->errorCode == '000') {
-    //         $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
-    //         return json_decode($dataDecrypted);
-    //     } else {
-    //         return $result;
-    //     }
-    // }
-
-    // public function sendOrderToAlepayDomestic($data) {
-    //     // get demo data
-    //     // $data = $this->createCheckoutDomesticData();
-    //     $data = [];
-    //     $data['returnUrl'] = $this->callbackUrl;
-    //     //  $data['cancelUrl'] = 'http://' . $_SERVER['SERVER_NAME'] . ':' . $_SERVER['SERVER_PORT'] . '/demo-alepay';
-    //     $url = $this->baseURL[$this->env] . $this->URI['requestPayment'];
-    //     $result = $this->sendRequestToAlepay($data, $url);
-    //     if ($result->errorCode == '000') {
-    //         $dataDecrypted = $this->alepayUtils->decryptData($result->data, $this->encryptKey);
-    //         return json_decode($dataDecrypted);
-    //     } else {
-    //         echo json_encode($result);
-    //     }
-    // }
 
     /*
      * get transaction info from Alepay
@@ -305,7 +272,6 @@ class Alepay {
 
     public function cancelCardLink($alepayToken) {
         $params = array('alepayToken' => $alepayToken);
-        // $url = $this->baseURL[$this->env] . $this->URI['cancelCardLink'];
         $url = $this->baseURL[$this->env] . $this->URI['cancelCardLink'];
         if ($this->env == 'sanbox') {
             $url = $this->baseURL['sanbox']['v1'] . $this->URI['cancelCardLink'];

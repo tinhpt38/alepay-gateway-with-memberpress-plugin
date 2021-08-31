@@ -5,6 +5,7 @@ error_reporting(0);
 
 require_once __DIR__ . '../../lib/Alepay.php';
 require_once __DIR__ . '../../utils/AleConfiguration.php';
+require_once __DIR__ . '/../plugins.php';
 
 if (!defined('ABSPATH')) {
     die('You are not allowed to call this page directly.');
@@ -20,53 +21,10 @@ class AlepayWebhookHandler
     private string $success_url;
     private string $failure_url;
 
-    function udoo_get_settings()
-{
-
-    // $securi = \Alepay\UdooSecuri::get_security();
-    // $encrypt_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$ENCRYPT_KEY);
-    // $api_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$API_KEY);
-    // $checksum_key = \Alepay\UdooSecuri::get_option(AleConfiguration::$CHECKSUM_KEY);
-
-    $securi = get_option(AleConfiguration::$SECURI,'');
-    $encrypt_key = '';
-    $api_key = '';
-    $checksum_key = '';
-    $base_url_v3 = get_option(AleConfiguration::$BASE_URL_V3,'');
-    $base_url_v1 = get_option(AleConfiguration::$BASE_URL_V1,'');
-    $base_url_live = get_option(AleConfiguration::$BASE_URL_LIVE,'');
-    $email = get_option(AleConfiguration::$EMAIL,'');
-    $connected = get_option(AleConfiguration::$CONNECTED,'');
-    $test_mode = get_option(AleConfiguration::$TEST_MODE,'');
-    $namespace = get_option(AleConfiguration::$NAME_SPACE,'');
-    $chekout_message = get_option(AleConfiguration::$CHECKOUT_MESSAGE,'');
-    $payment_hours = get_option(AleConfiguration::$PAYMENT_HOURS,'');
-
-    $connected = $connected == 'yes' ? 'checked' : '';
-    $test_mode = $test_mode == 'yes' ? 'checked' : '';
-
-
-    return array(
-        'securi' => $securi,
-        'encrypt' => $encrypt_key,
-        'api' => $api_key,
-        'url_live' => $base_url_live,
-        'url_v3' => $base_url_v3,
-        'url_v1' => $base_url_v1,
-        'checksum' => $checksum_key,
-        'email' => $email,
-        'connected' => $connected,
-        'test_mode' => $test_mode,
-        'namespace' => $namespace,
-        'checkout_message' => $chekout_message,
-        'payment_hours' => $payment_hours,
-    );
-}
-
     public function __construct()
     {
         error_log(__METHOD__);
-        $settings = $this->udoo_get_settings();
+        $settings = udoo_get_settings();
         $encrypt_key = $settings['encrypt'];
         $api_key = $settings['api'];
         $checksum_key = $settings['checksum'];
@@ -103,7 +61,7 @@ class AlepayWebhookHandler
         ];
 
         $this->alepayAPI = new Alepay($this->args);
-        
+
         add_action('rest_api_init', function () {
             $route = $this->args['namespace'];
             register_rest_route($route, '/alepay-whk', array(
@@ -180,11 +138,11 @@ class AlepayWebhookHandler
             'paymentHours' => $paymentHours
         ];
 
-//        error_log('Prepared data');
-//        error_log(print_r($data, true));
-//
-//        error_log('Webhook data');
-//        error_log(print_r($request_data, true));
+        //        error_log('Prepared data');
+        //        error_log(print_r($data, true));
+        //
+        //        error_log('Webhook data');
+        //        error_log(print_r($request_data, true));
 
         $result = $this->alepayAPI->sendTokenizationPayment($data);
 
